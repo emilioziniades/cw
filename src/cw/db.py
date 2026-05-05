@@ -8,18 +8,14 @@ import sqlite3
 from contextlib import contextmanager
 import logging
 
-from platformdirs import user_data_path
+from cw.config import config
 
 logger = logging.getLogger(__name__)
-
-APP_NAME = "cw"
-DATA_DIR = user_data_path(APP_NAME)
-DB_FILE = DATA_DIR / "cw.sqlite"
 
 
 @contextmanager
 def database():
-    db = sqlite3.connect(DB_FILE)
+    db = sqlite3.connect(config.database_file)
     try:
         with db:
             yield db
@@ -29,7 +25,7 @@ def database():
 
 def migrate():
     logger.debug("running database migrations")
-    DB_FILE.parent.mkdir(exist_ok=True)
+    config.database_file.parent.mkdir(exist_ok=True)
 
     migration = """
     CREATE TABLE IF NOT EXISTS crossword (

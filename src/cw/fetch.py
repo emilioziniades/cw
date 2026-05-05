@@ -15,12 +15,9 @@ import logging
 
 from bs4 import BeautifulSoup
 import requests
-from platformdirs import user_cache_path
-import click
 
-# TODO: store all this config in a config.py module
-APP_NAME = "cw"
-CACHE_DIR = user_cache_path(APP_NAME)
+from cw.config import config
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +28,7 @@ def fetch(number: Optional[int], style: str):
         number = puzzle_number_from_date(style, date.today())
     logger.info("Fetching %s crossword #%s", style, number)
 
-    cached_file = CACHE_DIR / "crosswords" / style / f"{number}.html"
+    cached_file = config.cache_dir / "crosswords" / style / f"{number}.html"
     url = f"https://www.theguardian.com/crosswords/{style}/{number}"
 
     if cached_file.exists():
