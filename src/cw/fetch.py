@@ -1,23 +1,21 @@
 """
 Module for fetching crossword data from the Guardian website.
 
-TODO:
-    - fetch html from guardian website
-    - cache html locally
-    - transform html into crossword json
-    - then store that locally in a sqlite database
+- fetches html from guardian website
+- caches html locally
+- transforms html into crossword json
 """
 
 # TODO: create enum for crossword styles
 
-from typing import Any, Optional
+from typing import Optional
 from datetime import date
 import json
 
 from bs4 import BeautifulSoup
+import click
 import requests
 from platformdirs import user_cache_path
-from pprint import pprint
 
 APP_NAME = "cw"
 CACHE_DIR = user_cache_path(APP_NAME)
@@ -25,18 +23,18 @@ CACHE_DIR = user_cache_path(APP_NAME)
 
 def fetch(number: Optional[int], style: str):
     if number is None:
-        number = puzzle_number_from_date(style)
-        print(CACHE_DIR)
-        print(number)
+        click.echo("No puzzle number specified, fetching today's puzzle")
+        number = puzzle_number_from_date(style, date.today())
+    click.echo(f"Fetching {style} crossword number {number}")
 
     cached_file = CACHE_DIR / "crosswords" / style / f"{number}.html"
     url = f"https://www.theguardian.com/crosswords/{style}/{number}"
 
     if cached_file.exists():
-        print("cached")
+        print("Found cached crossword")
         html = cached_file.read_text()
     else:
-        print("uncached, fetching")
+        click.echo(f"Fetching crossword from {url}")
         response = requests.get(url)
         response.raise_for_status()
         html = response.text
@@ -45,10 +43,10 @@ def fetch(number: Optional[int], style: str):
         cached_file.write_text(html)
 
     puzzle_json = puzzle_json_from_html(html)
-    pprint(puzzle_json)
+    return puzzle_json
 
 
-def puzzle_json_from_html(html: str) -> dict[Any, Any]:
+def puzzle_json_from_html(html: str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
 
     crossword_component = soup.find("gu-island", attrs={"name": "CrosswordComponent"})
@@ -61,7 +59,7 @@ def puzzle_json_from_html(html: str) -> dict[Any, Any]:
     return data
 
 
-def puzzle_number_from_date(style: str, d: date = date.today()) -> int:
+def puzzle_number_from_date(style: str, d: date) -> int:
     MINI_NUMBER_ONE = date(2025, 12, 17)
 
     if style == "mini":

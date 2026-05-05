@@ -1,5 +1,8 @@
 import click
 from cw.fetch import fetch as cw_fetch
+from cw import db
+
+db.migrate()
 
 
 @click.group()
@@ -15,7 +18,8 @@ def cli():
     type=click.Choice(["quick", "mini", "cryptic"]),
 )
 def fetch(number, style):
-    click.echo(repr(number))
-    click.echo(style)
-    click.echo("fetching " + style)
-    cw_fetch(number, style)
+    puzzle_json = cw_fetch(number, style)
+    if not db.has_crossword(puzzle_json):
+        db.add_crossword(puzzle_json)
+
+    click.echo("Fetched crossword")
