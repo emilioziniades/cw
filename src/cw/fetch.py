@@ -11,36 +11,43 @@ Module for fetching crossword data from the Guardian website.
 from typing import Optional
 from datetime import date
 import json
+import logging
 
 from bs4 import BeautifulSoup
 import click
 import requests
 from platformdirs import user_cache_path
 
+# TODO: store all this config in a config.py module
 APP_NAME = "cw"
 CACHE_DIR = user_cache_path(APP_NAME)
+
+logger = logging.getLogger(__name__)
 
 
 def fetch(number: Optional[int], style: str):
     if number is None:
-        click.echo("No puzzle number specified, fetching today's puzzle")
+        logger.info("No puzzle number specified, fetching today's puzzle")
         number = puzzle_number_from_date(style, date.today())
-    click.echo(f"Fetching {style} crossword number {number}")
+    logger.info("Fetching %s crossword #%s", style, number)
 
     cached_file = CACHE_DIR / "crosswords" / style / f"{number}.html"
     url = f"https://www.theguardian.com/crosswords/{style}/{number}"
 
     if cached_file.exists():
-        print("Found cached crossword")
+        logger.debug("Found cached crossword at %s", cached_file)
         html = cached_file.read_text()
     else:
-        click.echo(f"Fetching crossword from {url}")
+        logger.debug("Fetching crossword from %s", url)
+
         response = requests.get(url)
         response.raise_for_status()
         html = response.text
 
         cached_file.parent.mkdir(parents=True, exist_ok=True)
         cached_file.write_text(html)
+
+        logger.debug("Saved crossword html to %s", cached_file)
 
     puzzle_json = puzzle_json_from_html(html)
     return puzzle_json

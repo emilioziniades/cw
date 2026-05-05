@@ -6,9 +6,11 @@ Module for storing all crossword data in a sqlite database
 
 import sqlite3
 from contextlib import contextmanager
+import logging
 
-import click
 from platformdirs import user_data_path
+
+logger = logging.getLogger(__name__)
 
 APP_NAME = "cw"
 DATA_DIR = user_data_path(APP_NAME)
@@ -26,6 +28,7 @@ def database():
 
 
 def migrate():
+    logger.debug("running database migrations")
     DB_FILE.parent.mkdir(exist_ok=True)
 
     migration = """
@@ -94,7 +97,7 @@ def add_crossword(data: dict):
             clues,
         )
 
-    click.echo("Saved crossword")
+    logger.debug("Saved crossword to sqlite database")
 
 
 def has_crossword(data: dict) -> bool:
@@ -108,4 +111,9 @@ def has_crossword(data: dict) -> bool:
         )
         (count,) = res.fetchone()
 
-        return count >= 1
+        if count >= 1:
+            logger.debug("Crossword already in database")
+            return True
+        else:
+            logger.debug("Saved crossword to database")
+            return False

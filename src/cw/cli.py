@@ -2,12 +2,27 @@ import click
 from cw.fetch import fetch as cw_fetch
 from cw import db
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 db.migrate()
 
 
 @click.group()
-def cli():
-    pass
+@click.option("-v", "--verbose", is_flag=True)
+def cli(verbose: bool):
+    if verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(levelname)-6s[%(name)-10s]: %(message)s",
+        )
+        logger.debug("Verbose logging enabled")
+    else:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(levelname)-4s: %(message)s",
+        )
 
 
 @cli.command()
@@ -21,5 +36,3 @@ def fetch(number, style):
     puzzle_json = cw_fetch(number, style)
     if not db.has_crossword(puzzle_json):
         db.add_crossword(puzzle_json)
-
-    click.echo("Fetched crossword")
