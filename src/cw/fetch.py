@@ -14,9 +14,9 @@ import json
 import logging
 
 from bs4 import BeautifulSoup
-import click
 import requests
 from platformdirs import user_cache_path
+import click
 
 # TODO: store all this config in a config.py module
 APP_NAME = "cw"
