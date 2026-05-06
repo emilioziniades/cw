@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
+from typing import assert_never
 
 
 class CrosswordStyle(StrEnum):
@@ -8,9 +9,14 @@ class CrosswordStyle(StrEnum):
     CRYPTIC = auto()
 
 
+class Direction(StrEnum):
+    ACROSS = auto()
+    DOWN = auto()
+
+
 @dataclass(frozen=True)
 class Clue:
-    direction: str
+    direction: Direction
     number: int
     clue: str
     solution: str
@@ -21,7 +27,7 @@ class Clue:
     @staticmethod
     def from_json(data: dict) -> "Clue":
         return Clue(
-            direction=data["direction"],
+            direction=Direction(data["direction"]),
             number=data["number"],
             clue=data["clue"],
             solution=data["solution"],
@@ -65,14 +71,14 @@ class Crossword:
             start_x = clue.position_x
             start_y = clue.position_y
 
-            if clue.direction == "across":
+            if clue.direction is Direction.ACROSS:
                 end_x = start_x + clue.length - 1
                 end_y = start_y
-            elif clue.direction == "down":
+            elif clue.direction is Direction.DOWN:
                 end_x = start_x
                 end_y = start_y + clue.length - 1
             else:
-                raise ValueError(f"Unknown clue direction: {clue.direction}")
+                assert_never(clue.direction)
 
             if not (0 <= start_x <= end_x <= max_x and 0 <= start_y <= end_y <= max_y):
                 raise ValueError(
