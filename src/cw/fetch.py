@@ -14,7 +14,8 @@ import logging
 from bs4 import BeautifulSoup
 import requests
 
-from cw.config import CrosswordStyle, config
+from cw.config import config
+from cw.crossword import CrosswordStyle
 
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import click
 from cw.crossword import Crossword
 from cw.fetch import fetch as cw_fetch
 from cw import db
-from cw.config import CrosswordStyle
+from cw.crossword import CrosswordStyle
 
 import logging
 

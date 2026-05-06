@@ -1,12 +1,18 @@
 from dataclasses import dataclass
-from typing import Self
+from enum import StrEnum, auto
 
 
 # TODO: add sanitization
 # TODO: add sanity checks like does the length of the solution match the specified length, does it fit into the crossword, etc
 
 
-@dataclass
+class CrosswordStyle(StrEnum):
+    MINI = auto()
+    QUICK = auto()
+    CRYPTIC = auto()
+
+
+@dataclass(frozen=True)
 class Clue:
     direction: str
     number: int
@@ -18,8 +24,6 @@ class Clue:
 
     @staticmethod
     def from_json(data: dict) -> "Clue":
-        # "crossword_style": d["crosswordType"],
-        # "crossword_number": d["number"],
         return Clue(
             direction=data["direction"],
             number=data["number"],
@@ -30,11 +34,15 @@ class Clue:
             position_y=data["position"]["y"],
         )
 
+    def __post_init__(self):
+        if len(self.solution) != self.length:
+            raise ValueError("Solution length does not match supplied length")
 
-@dataclass
+
+@dataclass(frozen=True)
 class Crossword:
-    style: str
-    number: str
+    style: CrosswordStyle
+    number: int
     date: int
     name: str
     n_rows: int
