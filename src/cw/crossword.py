@@ -2,10 +2,6 @@ from dataclasses import dataclass
 from enum import StrEnum, auto
 
 
-# TODO: add sanitization
-# TODO: add sanity checks like does the length of the solution match the specified length, does it fit into the crossword, etc
-
-
 class CrosswordStyle(StrEnum):
     MINI = auto()
     QUICK = auto()

@@ -40,5 +40,10 @@ def fetch(number: int, style: CrosswordStyle):
         db.add_crossword(crossword)
 
 
-def start(number, style):
+@cli.command()
+@click.option("--number", type=int)
+@click.option(
+    "--style", required=True, type=click.Choice(CrosswordStyle, case_sensitive=False)
+)
+def start(number: int, style: CrosswordStyle):
     raise NotImplementedError()
