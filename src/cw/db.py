@@ -9,6 +9,8 @@ from contextlib import contextmanager
 import logging
 
 from cw.config import config
+from cw.crossword import Crossword
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,52 +60,56 @@ def migrate():
         db.executescript(migration)
 
 
-def add_crossword(data: dict):
-    d = data["data"]
-
+def add_crossword(crossword: Crossword):
     with database() as db:
         db.execute(
-            "INSERT INTO crossword(style, number, date, name, n_rows, n_columns) VALUES (:style, :number, :date, :name, :n_rows, :n_columns)",
+            """
+            INSERT INTO crossword
+            (style, number, date, name, n_rows, n_columns)
+            VALUES
+            (:style, :number, :date, :name, :n_rows, :n_columns)
+            """,
             {
-                "style": d["crosswordType"],
-                "number": d["number"],
-                "date": d["date"],
-                "name": d["name"],
-                "n_rows": d["dimensions"]["rows"],
-                "n_columns": d["dimensions"]["cols"],
+                "style": crossword.style,
+                "number": crossword.number,
+                "date": crossword.date,
+                "name": crossword.name,
+                "n_rows": crossword.n_rows,
+                "n_columns": crossword.n_columns,
             },
         )
 
-        clues = [
-            {
-                "crossword_style": d["crosswordType"],
-                "crossword_number": d["number"],
-                "direction": clue["direction"],
-                "number": clue["number"],
-                "clue": clue["clue"],
-                "solution": clue["solution"],
-                "length": clue["length"],
-                "position_x": clue["position"]["x"],
-                "position_y": clue["position"]["y"],
-            }
-            for clue in d["entries"]
-        ]
         db.executemany(
-            "INSERT INTO clue (crossword_style, crossword_number, direction, number, clue, solution, length, position_x, position_y) VALUES (:crossword_style, :crossword_number, :direction, :number, :clue, :solution, :length, :position_x, :position_y)",
-            clues,
+            """
+            INSERT INTO clue
+            (crossword_style, crossword_number, direction, number, clue, solution, length, position_x, position_y)
+            VALUES
+            (:crossword_style, :crossword_number, :direction, :number, :clue, :solution, :length, :position_x, :position_y)
+            """,
+            [
+                {
+                    "crossword_style": crossword.style,
+                    "crossword_number": crossword.number,
+                    "direction": clue.direction,
+                    "number": clue.number,
+                    "clue": clue.clue,
+                    "solution": clue.solution,
+                    "length": clue.length,
+                    "position_x": clue.position_x,
+                    "position_y": clue.position_y,
+                }
+                for clue in crossword.clues
+            ],
         )
 
     logger.debug("Saved crossword to sqlite database")
 
 
-def has_crossword(data: dict) -> bool:
-    style = data["data"]["crosswordType"]
-    number = data["data"]["number"]
-
+def has_crossword(crossword: Crossword) -> bool:
     with database() as db:
         res = db.execute(
             "SELECT COUNT(*) FROM crossword WHERE style = ? AND number = ?",
-            [style, number],
+            [crossword.style, crossword.number],
         )
         (count,) = res.fetchone()
 

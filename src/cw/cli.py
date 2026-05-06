@@ -1,4 +1,5 @@
 import click
+from cw.crossword import Crossword
 from cw.fetch import fetch as cw_fetch
 from cw import db
 from cw.config import CrosswordStyle
@@ -32,9 +33,10 @@ def cli(verbose: bool):
     "--style", required=True, type=click.Choice(CrosswordStyle, case_sensitive=False)
 )
 def fetch(number: int, style: CrosswordStyle):
-    puzzle_json = cw_fetch(number, style)
-    if not db.has_crossword(puzzle_json):
-        db.add_crossword(puzzle_json)
+    crossword_json = cw_fetch(number, style)
+    crossword = Crossword.from_json(crossword_json)
+    if not db.has_crossword(crossword):
+        db.add_crossword(crossword)
 
 
 def start(number, style):
