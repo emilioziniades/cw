@@ -37,7 +37,7 @@ def set_user_version(n: int):
 
 
 def migrate():
-    config.database_file.parent.mkdir(exist_ok=True)
+    config.database_file.parent.mkdir(exist_ok=True, parents=True)
 
     migrations = [
         """
