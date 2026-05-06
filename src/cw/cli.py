@@ -1,6 +1,7 @@
 import click
 from cw.fetch import fetch as cw_fetch
 from cw import db
+from cw.config import CrosswordStyle
 
 import logging
 
@@ -28,11 +29,13 @@ def cli(verbose: bool):
 @cli.command()
 @click.option("--number", type=int)
 @click.option(
-    "--style",
-    required=True,
-    type=click.Choice(["quick", "mini", "cryptic"]),
+    "--style", required=True, type=click.Choice(CrosswordStyle, case_sensitive=False)
 )
-def fetch(number, style):
+def fetch(number: int, style: CrosswordStyle):
     puzzle_json = cw_fetch(number, style)
     if not db.has_crossword(puzzle_json):
         db.add_crossword(puzzle_json)
+
+
+def start(number, style):
+    raise NotImplementedError()

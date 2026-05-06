@@ -1,4 +1,5 @@
 from pathlib import Path
+from enum import StrEnum, auto
 
 from platformdirs import user_cache_path, user_data_path
 
@@ -17,6 +18,12 @@ class Config:
     @property
     def database_file(self) -> Path:
         return self.data_dir / "cw.sqlite"
+
+
+class CrosswordStyle(StrEnum):
+    MINI = auto()
+    QUICK = auto()
+    CRYPTIC = auto()
 
 
 config = Config()

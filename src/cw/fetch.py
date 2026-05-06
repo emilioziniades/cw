@@ -6,8 +6,6 @@ Module for fetching crossword data from the Guardian website.
 - transforms html into crossword json
 """
 
-# TODO: create enum for crossword styles
-
 from typing import Optional
 from datetime import date
 import json
@@ -16,13 +14,13 @@ import logging
 from bs4 import BeautifulSoup
 import requests
 
-from cw.config import config
+from cw.config import CrosswordStyle, config
 
 
 logger = logging.getLogger(__name__)
 
 
-def fetch(number: Optional[int], style: str):
+def fetch(number: Optional[int], style: CrosswordStyle):
     if number is None:
         logger.info("No puzzle number specified, fetching today's puzzle")
         number = puzzle_number_from_date(style, date.today())
@@ -63,15 +61,13 @@ def puzzle_json_from_html(html: str) -> dict:
     return data
 
 
-def puzzle_number_from_date(style: str, d: date) -> int:
+def puzzle_number_from_date(style: CrosswordStyle, d: date) -> int:
     MINI_NUMBER_ONE = date(2025, 12, 17)
 
-    if style == "mini":
+    if style is CrosswordStyle.MINI:
         duration = d - MINI_NUMBER_ONE
         return duration.days
-    elif style == "quick":
+    elif style is CrosswordStyle.QUICK:
         raise NotImplementedError()
-    elif style == "cryptic":
+    elif style is CrosswordStyle.CRYPTIC:
         raise NotImplementedError()
-    else:
-        raise Exception(f"Unknown crossword style: {style}")
