@@ -53,10 +53,16 @@ def puzzle_json_from_html(html: str) -> dict:
     soup = BeautifulSoup(html, "html.parser")
 
     crossword_component = soup.find("gu-island", attrs={"name": "CrosswordComponent"})
-    assert crossword_component is not None
+    if crossword_component is None:
+        raise ValueError(
+            'Could not find <gu-island name="CrosswordComponent"> in Guardian html'
+        )
 
     crossword_props = crossword_component.get("props")
-    assert crossword_props is not None
+    if crossword_props is None:
+        raise ValueError(
+            '<gu-island name="CrosswordComponent"> did not have `props` attribute'
+        )
 
     data = json.loads(str(crossword_props))
     return data
