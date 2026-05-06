@@ -25,39 +25,60 @@ def database():
         db.close()
 
 
+def get_user_version():
+    with database() as db:
+        (user_version,) = db.execute("PRAGMA user_version;").fetchone()
+        return user_version
+
+
+def set_user_version(n: int):
+    with database() as db:
+        db.execute(f"PRAGMA user_version = {n}")
+
+
 def migrate():
-    logger.debug("running database migrations")
     config.database_file.parent.mkdir(exist_ok=True)
 
-    migration = """
-    CREATE TABLE IF NOT EXISTS crossword (
-        style TEXT NOT NULL,
-        number INTEGER NOT NULL,
-        date INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        n_rows INTEGER NOT NULL,
-        n_columns INTEGER NOT NULL,
-        PRIMARY KEY (style, number),
-        UNIQUE(number, style)
-    );
+    migrations = [
+        """
+        CREATE TABLE IF NOT EXISTS crossword (
+            style TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            date INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            n_rows INTEGER NOT NULL,
+            n_columns INTEGER NOT NULL,
+            PRIMARY KEY (style, number),
+            UNIQUE(number, style)
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS clue (
+            crossword_style TEXT NOT NULL,
+            crossword_number INTEGER NOT NULL,
+            direction TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            clue TEXT NOT NULL,
+            solution TEXT NOT NULL,
+            length INTEGER NOT NULL,
+            position_x INTEGER NOT NULL,
+            position_y INTEGER NOT NULL,
+            PRIMARY KEY (direction, number, crossword_style, crossword_number),
+            FOREIGN KEY(crossword_style, crossword_number) REFERENCES crossword(style, number)
+        );
+        """,
+    ]
 
-    CREATE TABLE IF NOT EXISTS clue (
-        crossword_style TEXT NOT NULL,
-        crossword_number INTEGER NOT NULL,
-        direction TEXT NOT NULL,
-        number INTEGER NOT NULL,
-        clue TEXT NOT NULL,
-        solution TEXT NOT NULL,
-        length INTEGER NOT NULL,
-        position_x INTEGER NOT NULL,
-        position_y INTEGER NOT NULL,
-        PRIMARY KEY (direction, number, crossword_style, crossword_number),
-        FOREIGN KEY(crossword_style, crossword_number) REFERENCES crossword(style, number)
-    );
-    """
+    logger.debug("Current migration version is %s", get_user_version())
 
-    with database() as db:
-        db.executescript(migration)
+    for i, migration in enumerate(migrations, start=1):
+        if i > get_user_version():
+            logger.debug("Running migration #%s", i)
+            with database() as db:
+                db.executescript(migration)
+            set_user_version(i)
+
+    logger.debug("Database migrations complete")
 
 
 def add_crossword(crossword: Crossword):
@@ -113,9 +134,9 @@ def has_crossword(crossword: Crossword) -> bool:
         )
         (count,) = res.fetchone()
 
-        if count >= 1:
+        exists = count >= 1
+
+        if exists:
             logger.debug("Crossword already in database")
-            return True
-        else:
-            logger.debug("Saved crossword to database")
-            return False
+
+        return exists

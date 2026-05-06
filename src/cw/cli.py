@@ -8,12 +8,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-db.migrate()
-
 
 @click.group()
 @click.option("-v", "--verbose", is_flag=True)
 def cli(verbose: bool):
+
     if verbose:
         logging.basicConfig(
             level=logging.DEBUG,
@@ -25,6 +24,8 @@ def cli(verbose: bool):
             level=logging.INFO,
             format="%(levelname)-4s: %(message)s",
         )
+
+    db.migrate()
 
 
 @cli.command()
