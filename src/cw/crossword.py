@@ -72,19 +72,9 @@ class Crossword:
                 end_x = start_x
                 end_y = start_y + clue.length - 1
             else:
-                raise ValueError(f"Unkown clue direction: {clue.direction}")
+                raise ValueError(f"Unknown clue direction: {clue.direction}")
 
-            for lower, n, upper in [
-                (0, start_x, max_x),
-                (0, end_x, max_x),
-                (0, start_y, end_y),
-                (0, end_y, max_y),
-            ]:
-                if n < lower or n > upper:
-                    raise ValueError(f"Clue {clue} does not fit in crossword {self}")
-
-            if clue.position_x > self.n_rows:
+            if not (0 <= start_x <= end_x <= max_x and 0 <= start_y <= end_y <= max_y):
                 raise ValueError(
-                    f"Clue {clue.number}-{clue.direction} does not fit in crossword"
+                    f"Clue {clue.number}-{clue.direction} does not fit in crossword {self.n_columns}x{self.n_rows}"
                 )
-        pass
