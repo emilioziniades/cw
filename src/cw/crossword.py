@@ -51,13 +51,44 @@ class Crossword:
 
     @staticmethod
     def from_json(data: dict) -> "Crossword":
-        d = data["data"]
         return Crossword(
-            style=d["crosswordType"],
-            number=d["number"],
-            date=d["date"],
-            name=d["name"],
-            n_rows=d["dimensions"]["rows"],
-            n_columns=d["dimensions"]["cols"],
-            clues=[Clue.from_json(c) for c in d["entries"]],
+            style=CrosswordStyle(data["crosswordType"]),
+            number=data["number"],
+            date=data["date"],
+            name=data["name"],
+            n_rows=data["dimensions"]["rows"],
+            n_columns=data["dimensions"]["cols"],
+            clues=[Clue.from_json(c) for c in data["entries"]],
         )
+
+    def __post_init__(self):
+        for clue in self.clues:
+            max_x = self.n_columns - 1
+            max_y = self.n_rows - 1
+
+            start_x = clue.position_x
+            start_y = clue.position_y
+
+            if clue.direction == "across":
+                end_x = start_x + clue.length - 1
+                end_y = start_y
+            elif clue.direction == "down":
+                end_x = start_x
+                end_y = start_y + clue.length - 1
+            else:
+                raise ValueError(f"Unkown clue direction: {clue.direction}")
+
+            for lower, n, upper in [
+                (0, start_x, max_x),
+                (0, end_x, max_x),
+                (0, start_y, end_y),
+                (0, end_y, max_y),
+            ]:
+                if n < lower or n > upper:
+                    raise ValueError(f"Clue {clue} does not fit in crossword {self}")
+
+            if clue.position_x > self.n_rows:
+                raise ValueError(
+                    f"Clue {clue.number}-{clue.direction} does not fit in crossword"
+                )
+        pass

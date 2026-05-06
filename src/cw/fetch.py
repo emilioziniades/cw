@@ -46,7 +46,7 @@ def fetch(number: Optional[int], style: CrosswordStyle):
         logger.debug("Saved crossword html to %s", cached_file)
 
     puzzle_json = puzzle_json_from_html(html)
-    return puzzle_json
+    return puzzle_json["data"]
 
 
 def puzzle_json_from_html(html: str) -> dict:
