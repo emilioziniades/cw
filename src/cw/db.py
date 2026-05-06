@@ -4,6 +4,7 @@ Module for storing all crossword data in a sqlite database
 - stores crossword JSON into a sqlite database
 """
 
+from typing import Generator
 import sqlite3
 from contextlib import contextmanager
 import logging
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def database():
+def database() -> Generator[sqlite3.Connection]:
     db = sqlite3.connect(config.database_file)
     try:
         with db:
@@ -25,15 +26,13 @@ def database():
         db.close()
 
 
-def get_user_version():
-    with database() as db:
-        (user_version,) = db.execute("PRAGMA user_version;").fetchone()
-        return user_version
+def get_user_version(db: sqlite3.Connection):
+    (user_version,) = db.execute("PRAGMA user_version;").fetchone()
+    return user_version
 
 
-def set_user_version(n: int):
-    with database() as db:
-        db.execute(f"PRAGMA user_version = {n}")
+def set_user_version(db: sqlite3.Connection, n: int):
+    db.execute(f"PRAGMA user_version = {n}")
 
 
 def migrate():
@@ -69,14 +68,15 @@ def migrate():
         """,
     ]
 
-    logger.debug("Current migration version is %s", get_user_version())
+    with database() as db:
+        logger.debug("Current migration version is %s", get_user_version(db))
 
     for i, migration in enumerate(migrations, start=1):
-        if i > get_user_version():
-            logger.debug("Running migration #%s", i)
-            with database() as db:
+        with database() as db:
+            if i > get_user_version(db):
+                logger.debug("Running migration #%s", i)
                 db.executescript(migration)
-            set_user_version(i)
+                set_user_version(db, i)
 
     logger.debug("Database migrations complete")
 
