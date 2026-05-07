@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def fetch(number: Optional[int], style: CrosswordStyle):
     if number is None:
         logger.info("No puzzle number specified, fetching today's puzzle")
-        number = puzzle_number_from_date(style, date.today())
+        number = crossword_number_from_date(style, date.today())
     logger.info("Fetching %s crossword #%s", style, number)
 
     cached_file = config.cache_dir / "crosswords" / style / f"{number}.html"
@@ -68,7 +68,7 @@ def puzzle_json_from_html(html: str) -> dict:
     return data
 
 
-def puzzle_number_from_date(style: CrosswordStyle, d: date) -> int:
+def crossword_number_from_date(style: CrosswordStyle, d: date) -> int:
     MINI_NUMBER_ONE = date(2025, 12, 17)
 
     if style is CrosswordStyle.MINI:
