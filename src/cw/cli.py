@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Optional
 import click
 from cw.crossword import Crossword
 from cw.fetch import fetch as cw_fetch, crossword_number_from_date
@@ -49,9 +50,10 @@ def fetch(style: CrosswordStyle, number: int):
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
-def start(style: CrosswordStyle, number: int):
-    n = number or crossword_number_from_date(style, date.today())
-    db.start_crossword(style, n)
+def start(style: CrosswordStyle, number: Optional[int]):
+    if number is None:
+        number = crossword_number_from_date(style, date.today())
+    db.start_crossword(style, number)
 
 
 @cli.command()
@@ -61,6 +63,7 @@ def start(style: CrosswordStyle, number: int):
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
-def stop(style: CrosswordStyle, number: int):
-    n = number or crossword_number_from_date(style, date.today())
-    db.stop_crossword(style, n)
+def stop(style: CrosswordStyle, number: Optional[int]):
+    if number is None:
+        number = crossword_number_from_date(style, date.today())
+    db.stop_crossword(style, number)
