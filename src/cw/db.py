@@ -10,7 +10,7 @@ from contextlib import contextmanager
 import logging
 
 from cw.config import config
-from cw.crossword import Crossword
+from cw.crossword import Crossword, CrosswordStyle, State, UserCrossword
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 @contextmanager
 def database() -> Generator[sqlite3.Connection]:
     db = sqlite3.connect(config.database_file)
+    db.row_factory = sqlite3.Row
+    db.execute("PRAGMA foreign_keys = ON")
     try:
         with db:
             yield db
@@ -48,7 +50,7 @@ def migrate():
             n_rows INTEGER NOT NULL,
             n_columns INTEGER NOT NULL,
             PRIMARY KEY (style, number),
-            UNIQUE(number, style)
+            UNIQUE (number, style)
         );
         """,
         """
@@ -63,8 +65,23 @@ def migrate():
             position_x INTEGER NOT NULL,
             position_y INTEGER NOT NULL,
             PRIMARY KEY (direction, number, crossword_style, crossword_number),
-            FOREIGN KEY(crossword_style, crossword_number) REFERENCES crossword(style, number)
+            FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
         );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS user_crossword (
+            style TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            state TEXT NOT NULL,
+            PRIMARY KEY (style, number),
+            FOREIGN KEY (style, number) REFERENCES crossword (style, number),
+            UNIQUE (number, style)
+        );
+        """,
+        """
+        CREATE UNIQUE INDEX only_one_active
+        ON user_crossword (state)
+        WHERE state = 'active'
         """,
     ]
 
@@ -123,6 +140,20 @@ def add_crossword(crossword: Crossword):
             ],
         )
 
+        db.execute(
+            """
+            INSERT INTO user_crossword
+            (style, number, state)
+            VALUES
+            (:style, :number, :state)
+            """,
+            {
+                "style": crossword.style,
+                "number": crossword.number,
+                "state": State.INACTIVE,
+            },
+        )
+
     logger.debug("Saved crossword to sqlite database")
 
 
@@ -140,3 +171,31 @@ def has_crossword(crossword: Crossword) -> bool:
             logger.debug("Crossword already in database")
 
         return exists
+
+
+def start_crossword(style: CrosswordStyle, number: int):
+    with database() as db:
+        res = db.execute(
+            "SELECT * FROM user_crossword WHERE state = 'active'"
+        ).fetchone()
+        active = UserCrossword.from_row(res) if res else None
+
+        if active is not None and (active.style, active.number) != (style, number):
+            db.execute(
+                """
+                UPDATE user_crossword
+                SET state = 'inactive'
+                WHERE style = ? AND number = ?
+                """,
+                (active.style, active.number),
+            )
+            logger.debug("Set %s #%s as inactive", active.style, active.number)
+        db.execute(
+            """
+            UPDATE user_crossword
+            SET state = 'active'
+            WHERE style = ? AND number = ?
+            """,
+            (style, number),
+        )
+        logger.debug("Set %s #%s as active", style, number)
