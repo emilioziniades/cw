@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum, auto
+import sqlite3
 from typing import assert_never
 
 
@@ -12,6 +13,12 @@ class CrosswordStyle(StrEnum):
 class Direction(StrEnum):
     ACROSS = auto()
     DOWN = auto()
+
+
+class State(StrEnum):
+    ACTIVE = auto()
+    INACTIVE = auto()
+    COMPLETE = auto()
 
 
 @dataclass(frozen=True)
@@ -84,3 +91,19 @@ class Crossword:
                 raise ValueError(
                     f"Clue {clue.number}-{clue.direction} does not fit in crossword {self.n_columns}x{self.n_rows}"
                 )
+
+
+@dataclass(frozen=True)
+class UserCrossword:
+    style: CrosswordStyle
+    number: int
+    state: State
+
+    @staticmethod
+    def from_row(row: sqlite3.Row) -> "UserCrossword":
+        data = dict(row)
+        return UserCrossword(
+            style=data["style"],
+            number=data["number"],
+            state=State(data["state"]),
+        )

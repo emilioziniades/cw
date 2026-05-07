@@ -1,6 +1,7 @@
+from datetime import date
 import click
 from cw.crossword import Crossword
-from cw.fetch import fetch as cw_fetch
+from cw.fetch import fetch as cw_fetch, crossword_number_from_date
 from cw import db
 from cw.crossword import CrosswordStyle
 
@@ -12,7 +13,6 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.option("-v", "--verbose", is_flag=True)
 def cli(verbose: bool):
-
     if verbose:
         logging.basicConfig(
             level=logging.DEBUG,
@@ -29,11 +29,13 @@ def cli(verbose: bool):
 
 
 @cli.command()
-@click.option("--number", type=int)
-@click.option(
-    "--style", required=True, type=click.Choice(CrosswordStyle, case_sensitive=False)
+@click.argument(
+    "style",
+    type=click.Choice(CrosswordStyle, case_sensitive=False),
+    default=CrosswordStyle.MINI,
 )
-def fetch(number: int, style: CrosswordStyle):
+@click.argument("number", type=int, default=None)
+def fetch(style: CrosswordStyle, number: int):
     crossword_json = cw_fetch(number, style)
     crossword = Crossword.from_json(crossword_json)
     if not db.has_crossword(crossword):
@@ -41,9 +43,12 @@ def fetch(number: int, style: CrosswordStyle):
 
 
 @cli.command()
-@click.option("--number", type=int)
-@click.option(
-    "--style", required=True, type=click.Choice(CrosswordStyle, case_sensitive=False)
+@click.argument(
+    "style",
+    type=click.Choice(CrosswordStyle, case_sensitive=False),
+    default=CrosswordStyle.MINI,
 )
-def start(number: int, style: CrosswordStyle):
-    raise NotImplementedError()
+@click.argument("number", type=int, default=None)
+def start(style: CrosswordStyle, number: int):
+    n = number or crossword_number_from_date(style, date.today())
+    db.start_crossword(style, n)
