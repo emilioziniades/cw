@@ -52,3 +52,15 @@ def fetch(style: CrosswordStyle, number: int):
 def start(style: CrosswordStyle, number: int):
     n = number or crossword_number_from_date(style, date.today())
     db.start_crossword(style, n)
+
+
+@cli.command()
+@click.argument(
+    "style",
+    type=click.Choice(CrosswordStyle, case_sensitive=False),
+    default=CrosswordStyle.MINI,
+)
+@click.argument("number", type=int, default=None)
+def stop(style: CrosswordStyle, number: int):
+    n = number or crossword_number_from_date(style, date.today())
+    db.stop_crossword(style, n)

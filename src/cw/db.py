@@ -199,3 +199,16 @@ def start_crossword(style: CrosswordStyle, number: int):
             (style, number),
         )
         logger.debug("Set %s #%s as active", style, number)
+
+
+def stop_crossword(style: CrosswordStyle, number: int):
+    with database() as db:
+        db.execute(
+            """
+            UPDATE user_crossword
+            SET state = 'inactive'
+            WHERE style = ? AND number = ?
+            """,
+            (style, number),
+        )
+        logger.debug("Set %s #%s as inactive", style, number)
