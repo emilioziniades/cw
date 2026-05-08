@@ -3,7 +3,7 @@ from typing import Optional
 import click
 from cw.crossword import Crossword
 from cw.fetch import fetch as cw_fetch, crossword_number_from_date
-from cw import db
+from cw import db, display
 from cw.crossword import CrosswordStyle
 
 import logging
@@ -67,3 +67,19 @@ def stop(style: CrosswordStyle, number: Optional[int]):
     if number is None:
         number = crossword_number_from_date(style, date.today())
     db.stop_crossword(style, number)
+
+
+@cli.command()
+def show():
+    active = db.get_active_crossword()
+    if active is None:
+        logger.fatal(
+            "No active crossword. Use `cw start <style> <number>` to start a puzzle"
+        )
+        exit(1)
+
+    crossword = db.get_crossword(active.style, active.number)
+    if crossword is None:
+        raise ValueError("The active crossword does not exist")
+
+    display.print_crossword(crossword)

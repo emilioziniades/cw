@@ -43,6 +43,19 @@ class Clue:
             position_y=data["position"]["y"],
         )
 
+    @staticmethod
+    def from_row(row: sqlite3.Row) -> "Clue":
+        data = dict(row)
+        return Clue(
+            direction=Direction(data["direction"]),
+            number=data["number"],
+            clue=data["clue"],
+            solution=data["solution"],
+            length=data["length"],
+            position_x=data["position_x"],
+            position_y=data["position_y"],
+        )
+
     def __post_init__(self):
         if len(self.solution) != self.length:
             raise ValueError("Solution length does not match supplied length")
@@ -68,6 +81,19 @@ class Crossword:
             n_rows=data["dimensions"]["rows"],
             n_columns=data["dimensions"]["cols"],
             clues=[Clue.from_json(c) for c in data["entries"]],
+        )
+
+    @staticmethod
+    def from_row(row: sqlite3.Row, clues_rows: list[sqlite3.Row]) -> "Crossword":
+        data = dict(row)
+        return Crossword(
+            style=CrosswordStyle(data["style"]),
+            number=data["number"],
+            date=data["date"],
+            name=data["name"],
+            n_rows=data["n_rows"],
+            n_columns=data["n_columns"],
+            clues=[Clue.from_row(c) for c in clues_rows],
         )
 
     def __post_init__(self):

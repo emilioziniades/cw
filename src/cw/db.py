@@ -4,7 +4,7 @@ Module for storing all crossword data in a sqlite database
 - stores crossword JSON into a sqlite database
 """
 
-from typing import Generator
+from typing import Generator, Optional
 import sqlite3
 from contextlib import contextmanager
 import logging
@@ -174,12 +174,9 @@ def has_crossword(crossword: Crossword) -> bool:
 
 
 def start_crossword(style: CrosswordStyle, number: int):
-    with database() as db:
-        res = db.execute(
-            "SELECT * FROM user_crossword WHERE state = 'active'"
-        ).fetchone()
-        active = UserCrossword.from_row(res) if res else None
+    active = get_active_crossword()
 
+    with database() as db:
         if active is not None and (active.style, active.number) != (style, number):
             db.execute(
                 """
@@ -201,6 +198,14 @@ def start_crossword(style: CrosswordStyle, number: int):
         logger.debug("Set %s #%s as active", style, number)
 
 
+def get_active_crossword() -> Optional[UserCrossword]:
+    with database() as db:
+        res = db.execute(
+            "SELECT * FROM user_crossword WHERE state = 'active'"
+        ).fetchone()
+        return UserCrossword.from_row(res) if res else None
+
+
 def stop_crossword(style: CrosswordStyle, number: int):
     with database() as db:
         db.execute(
@@ -212,3 +217,26 @@ def stop_crossword(style: CrosswordStyle, number: int):
             (style, number),
         )
         logger.debug("Set %s #%s as inactive", style, number)
+
+
+def get_crossword(style: CrosswordStyle, number: int) -> Optional[Crossword]:
+    with database() as db:
+        res = db.execute(
+            """
+            SELECT *
+            FROM crossword
+            WHERE style = ? AND number = ?
+            """,
+            (style, number),
+        ).fetchone()
+
+        clues_res = db.execute(
+            """
+            SELECT *
+            FROM clue
+            WHERE crossword_style = ? AND crossword_number = ?
+            """,
+            (style, number),
+        ).fetchall()
+
+        return Crossword.from_row(res, clues_res) if res else None
