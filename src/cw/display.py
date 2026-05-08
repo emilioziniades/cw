@@ -5,8 +5,11 @@ Module for displaying crossword in terminal
 import os
 from dataclasses import dataclass
 from typing import Optional
-from cw.crossword import Crossword, Direction
 
+from rich import print
+from rich.columns import Columns
+
+from cw.crossword import Crossword, Direction
 
 TL = "┌"
 TR = "┐"
@@ -132,7 +135,30 @@ class Grid:
 
 
 def print_crossword(cw: Crossword):
-    print(crossword_to_grid(cw))
+    grid = crossword_to_grid(cw)
+
+    acrosses = ["[b][u]Across[/b][/u]"] + list(
+        sorted(
+            [str(c) for c in cw.clues if c.direction is Direction.ACROSS],
+        )
+    )
+
+    downs = ["[b][u]Down[/b][/u]"] + list(
+        sorted(
+            [str(c) for c in cw.clues if c.direction is Direction.DOWN],
+        )
+    )
+
+    print(
+        Columns(
+            [
+                str(grid),
+                os.linesep.join(acrosses),
+                os.linesep.join(downs),
+            ],
+            padding=(1, 3),
+        )
+    )
 
 
 def crossword_to_grid(cw: Crossword) -> Grid:

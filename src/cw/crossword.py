@@ -60,6 +60,15 @@ class Clue:
         if len(self.solution) != self.length:
             raise ValueError("Solution length does not match supplied length")
 
+    def __str__(self):
+        clue = (
+            self.clue.replace("<span>", "")
+            .replace("</span>", "")
+            .replace("<i>", "[italic]")
+            .replace("</i>", "[/italic]")
+        )
+        return f"{self.number}. {clue}"
+
 
 @dataclass(frozen=True)
 class Crossword:

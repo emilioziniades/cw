@@ -12,6 +12,7 @@ dependencies = [
     "click>=8.3.3",
     "platformdirs>=4.9.6",
     "requests>=2.33.1",
+    "rich>=15.0.0",
 ]
 
 [project.scripts]
