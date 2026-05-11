@@ -83,3 +83,8 @@ def show():
         raise ValueError("The active crossword does not exist")
 
     display.print_crossword(crossword)
+
+
+def list():
+    crosswords = db.get_all_user_crosswords()
+    display.print_crossword_list(crosswords)

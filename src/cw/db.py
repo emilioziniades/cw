@@ -240,3 +240,15 @@ def get_crossword(style: CrosswordStyle, number: int) -> Optional[Crossword]:
         ).fetchall()
 
         return Crossword.from_row(res, clues_res) if res else None
+
+
+def get_all_user_crosswords() -> list[UserCrossword]:
+    with database() as db:
+        res = db.execute(
+            """
+            SELECT *
+            FROM user_crossword
+            """,
+        ).fetchall()
+
+        return [UserCrossword.from_row(row) for row in res]

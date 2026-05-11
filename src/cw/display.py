@@ -8,8 +8,10 @@ from typing import Optional
 
 from rich import print
 from rich.columns import Columns
+from rich.table import Table
+from rich.console import Console
 
-from cw.crossword import Crossword, Direction
+from cw.crossword import Crossword, UserCrossword, Direction, State
 
 TL = "┌"
 TR = "┐"
@@ -182,3 +184,36 @@ def crossword_to_grid(cw: Crossword) -> Grid:
                     grid[y][x] = Cell(letter=" ", is_black_square=False)
 
     return Grid(grid)
+
+
+def print_crossword_list(cws: list[UserCrossword]):
+    table = Table(title="Crosswords")
+    table.add_column("Puzzle")
+    table.add_column("Status")
+
+    def sort_fn(cw: UserCrossword):
+        match cw.state:
+            case State.ACTIVE:
+                return 0
+            case State.INACTIVE:
+                return 1
+            case State.COMPLETE:
+                return 2
+
+    def style_for(cw):
+        match cw.state:
+            case State.ACTIVE:
+                return "green bold"
+            case State.INACTIVE:
+                return "yellow"
+            case State.COMPLETE:
+                return "bright_black"
+
+    for cw in sorted(cws, key=sort_fn):
+        table.add_row(
+            f"{cw.style.capitalize()} #{cw.number}",
+            cw.state.capitalize(),
+            style=style_for(cw),
+        )
+
+    Console().print(table)
