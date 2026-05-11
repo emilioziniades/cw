@@ -26,10 +26,10 @@ class Clue:
     direction: Direction
     number: int
     clue: str
-    solution: str
-    length: int
     position_x: int
     position_y: int
+    solution: str
+    user_solution: str
 
     @staticmethod
     def from_json(data: dict) -> "Clue":
@@ -37,10 +37,10 @@ class Clue:
             direction=Direction(data["direction"]),
             number=data["number"],
             clue=data["clue"],
-            solution=data["solution"],
-            length=data["length"],
             position_x=data["position"]["x"],
             position_y=data["position"]["y"],
+            solution=data["solution"],
+            user_solution=" " * len(data["solution"]),
         )
 
     @staticmethod
@@ -50,15 +50,11 @@ class Clue:
             direction=Direction(data["direction"]),
             number=data["number"],
             clue=data["clue"],
-            solution=data["solution"],
-            length=data["length"],
             position_x=data["position_x"],
             position_y=data["position_y"],
+            solution=data["solution"],
+            user_solution=data["user_solution"],
         )
-
-    def __post_init__(self):
-        if len(self.solution) != self.length:
-            raise ValueError("Solution length does not match supplied length")
 
     def __str__(self):
         clue = (
@@ -78,6 +74,7 @@ class Crossword:
     name: str
     n_rows: int
     n_columns: int
+    user_state: State
     clues: list[Clue]
 
     @staticmethod
@@ -89,6 +86,7 @@ class Crossword:
             name=data["name"],
             n_rows=data["dimensions"]["rows"],
             n_columns=data["dimensions"]["cols"],
+            user_state=State.INACTIVE,
             clues=[Clue.from_json(c) for c in data["entries"]],
         )
 
@@ -102,11 +100,13 @@ class Crossword:
             name=data["name"],
             n_rows=data["n_rows"],
             n_columns=data["n_columns"],
+            user_state=State(data["user_state"]),
             clues=[Clue.from_row(c) for c in clues_rows],
         )
 
     def __post_init__(self):
         for clue in self.clues:
+            length = len(clue.solution)
             max_x = self.n_columns - 1
             max_y = self.n_rows - 1
 
@@ -114,11 +114,11 @@ class Crossword:
             start_y = clue.position_y
 
             if clue.direction is Direction.ACROSS:
-                end_x = start_x + clue.length - 1
+                end_x = start_x + length - 1
                 end_y = start_y
             elif clue.direction is Direction.DOWN:
                 end_x = start_x
-                end_y = start_y + clue.length - 1
+                end_y = start_y + length - 1
             else:
                 assert_never(clue.direction)
 
@@ -126,35 +126,3 @@ class Crossword:
                 raise ValueError(
                     f"Clue {clue.number}-{clue.direction} does not fit in crossword {self.n_columns}x{self.n_rows}"
                 )
-
-
-@dataclass(frozen=True)
-class UserCrossword:
-    style: CrosswordStyle
-    number: int
-    state: State
-
-    @staticmethod
-    def from_row(row: sqlite3.Row) -> "UserCrossword":
-        data = dict(row)
-        return UserCrossword(
-            style=data["style"],
-            number=data["number"],
-            state=State(data["state"]),
-        )
-
-
-@dataclass(frozen=True)
-class UserClue:
-    direction: Direction
-    number: int
-    user_solution: str
-
-    @staticmethod
-    def from_row(row: sqlite3.Row) -> "UserClue":
-        data = dict(row)
-        return UserClue(
-            direction=data["direction"],
-            number=data["number"],
-            user_solution=data["user_solution"],
-        )

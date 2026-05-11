@@ -11,7 +11,7 @@ from rich.columns import Columns
 from rich.table import Table
 from rich.console import Console
 
-from cw.crossword import Crossword, UserCrossword, Direction, State
+from cw.crossword import Crossword, Direction, State
 
 TL = "┌"
 TR = "┐"
@@ -167,32 +167,34 @@ def crossword_to_grid(cw: Crossword) -> Grid:
     grid = [[Cell() for _ in range(cw.n_columns)] for _ in range(cw.n_rows)]
 
     for clue in cw.clues:
+        length = len(clue.solution)
+
         grid[clue.position_y][clue.position_x] = Cell(
             clue_number=clue.number, is_black_square=False
         )
 
         if clue.direction is Direction.DOWN:
             x = clue.position_x
-            for y in range(clue.position_y + 1, clue.position_y + clue.length):
+            for y in range(clue.position_y + 1, clue.position_y + length):
                 if grid[y][x].is_black_square:
                     grid[y][x] = Cell(letter=" ", is_black_square=False)
 
         elif clue.direction is Direction.ACROSS:
             y = clue.position_y
-            for x in range(clue.position_x + 1, clue.position_x + clue.length):
+            for x in range(clue.position_x + 1, clue.position_x + length):
                 if grid[y][x].is_black_square:
                     grid[y][x] = Cell(letter=" ", is_black_square=False)
 
     return Grid(grid)
 
 
-def print_crossword_list(cws: list[UserCrossword]):
+def print_crossword_list(cws: list[Crossword]):
     table = Table(title="Crosswords")
     table.add_column("Puzzle")
     table.add_column("Status")
 
-    def sort_fn(cw: UserCrossword):
-        match cw.state:
+    def sort_fn(cw: Crossword):
+        match cw.user_state:
             case State.ACTIVE:
                 return 0
             case State.INACTIVE:
@@ -200,8 +202,8 @@ def print_crossword_list(cws: list[UserCrossword]):
             case State.COMPLETE:
                 return 2
 
-    def style_for(cw):
-        match cw.state:
+    def style_for(cw: Crossword):
+        match cw.user_state:
             case State.ACTIVE:
                 return "green bold"
             case State.INACTIVE:
@@ -212,7 +214,7 @@ def print_crossword_list(cws: list[UserCrossword]):
     for cw in sorted(cws, key=sort_fn):
         table.add_row(
             f"{cw.style.capitalize()} #{cw.number}",
-            cw.state.capitalize(),
+            cw.user_state.capitalize(),
             style=style_for(cw),
         )
 

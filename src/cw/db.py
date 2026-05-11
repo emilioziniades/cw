@@ -11,7 +11,7 @@ import logging
 
 
 from cw.config import config
-from cw.crossword import Crossword, CrosswordStyle, State, UserCrossword, Direction
+from cw.crossword import Crossword, CrosswordStyle, Direction
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,7 @@ def migrate():
             name TEXT NOT NULL,
             n_rows INTEGER NOT NULL,
             n_columns INTEGER NOT NULL,
+            user_state TEXT NOT NULL,
             PRIMARY KEY (style, number),
             UNIQUE (number, style)
         );
@@ -61,40 +62,18 @@ def migrate():
             direction TEXT NOT NULL,
             number INTEGER NOT NULL,
             clue TEXT NOT NULL,
-            solution TEXT NOT NULL,
-            length INTEGER NOT NULL,
             position_x INTEGER NOT NULL,
             position_y INTEGER NOT NULL,
+            solution TEXT NOT NULL,
+            user_solution TEXT NOT NULL CHECK(length(user_solution) = length(solution)),
             PRIMARY KEY (direction, number, crossword_style, crossword_number),
             FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
-        );
-        """,
-        """
-        CREATE TABLE IF NOT EXISTS user_crossword (
-            style TEXT NOT NULL,
-            number INTEGER NOT NULL,
-            state TEXT NOT NULL,
-            PRIMARY KEY (style, number),
-            FOREIGN KEY (style, number) REFERENCES crossword (style, number),
-            UNIQUE (number, style)
         );
         """,
         """
         CREATE UNIQUE INDEX only_one_active
-        ON user_crossword (state)
-        WHERE state = 'active'
-        """,
-        # TODO: add check solution check(length(solution) = length)
-        """
-        CREATE TABLE IF NOT EXISTS user_clue (
-            direction TEXT NOT NULL,
-            number INTEGER NOT NULL,
-            crossword_style TEXT NOT NULL,
-            crossword_number INTEGER NOT NULL,
-            user_solution TEXT NOT NULL,
-            PRIMARY KEY (direction, number, crossword_style, crossword_number),
-            FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
-        );
+        ON crossword (user_state)
+        WHERE user_state = 'active'
         """,
     ]
 
@@ -116,9 +95,9 @@ def add_crossword(crossword: Crossword):
         db.execute(
             """
             INSERT INTO crossword
-            (style, number, date, name, n_rows, n_columns)
+            (style, number, date, name, n_rows, n_columns, user_state)
             VALUES
-            (:style, :number, :date, :name, :n_rows, :n_columns)
+            (:style, :number, :date, :name, :n_rows, :n_columns, :user_state)
             """,
             {
                 "style": crossword.style,
@@ -127,15 +106,16 @@ def add_crossword(crossword: Crossword):
                 "name": crossword.name,
                 "n_rows": crossword.n_rows,
                 "n_columns": crossword.n_columns,
+                "user_state": crossword.user_state,
             },
         )
 
         db.executemany(
             """
             INSERT INTO clue
-            (crossword_style, crossword_number, direction, number, clue, solution, length, position_x, position_y)
+            (crossword_style, crossword_number, direction, number, clue, position_x, position_y, solution, user_solution)
             VALUES
-            (:crossword_style, :crossword_number, :direction, :number, :clue, :solution, :length, :position_x, :position_y)
+            (:crossword_style, :crossword_number, :direction, :number, :clue, :position_x, :position_y, :solution, :user_solution)
             """,
             [
                 {
@@ -144,27 +124,13 @@ def add_crossword(crossword: Crossword):
                     "direction": clue.direction,
                     "number": clue.number,
                     "clue": clue.clue,
-                    "solution": clue.solution,
-                    "length": clue.length,
                     "position_x": clue.position_x,
                     "position_y": clue.position_y,
+                    "solution": clue.solution,
+                    "user_solution": clue.user_solution,
                 }
                 for clue in crossword.clues
             ],
-        )
-
-        db.execute(
-            """
-            INSERT INTO user_crossword
-            (style, number, state)
-            VALUES
-            (:style, :number, :state)
-            """,
-            {
-                "style": crossword.style,
-                "number": crossword.number,
-                "state": State.INACTIVE,
-            },
         )
 
     logger.debug("Saved crossword to sqlite database")
@@ -193,8 +159,8 @@ def start_crossword(style: CrosswordStyle, number: int):
         if active is not None and (active.style, active.number) != (style, number):
             db.execute(
                 """
-                UPDATE user_crossword
-                SET state = 'inactive'
+                UPDATE crossword
+                SET user_state = 'inactive'
                 WHERE style = ? AND number = ?
                 """,
                 (active.style, active.number),
@@ -202,8 +168,8 @@ def start_crossword(style: CrosswordStyle, number: int):
             logger.debug("Set %s #%s as inactive", active.style, active.number)
         db.execute(
             """
-            UPDATE user_crossword
-            SET state = 'active'
+            UPDATE crossword
+            SET user_state = 'active'
             WHERE style = ? AND number = ?
             """,
             (style, number),
@@ -211,20 +177,20 @@ def start_crossword(style: CrosswordStyle, number: int):
         logger.debug("Set %s #%s as active", style, number)
 
 
-def get_active_crossword() -> Optional[UserCrossword]:
+def get_active_crossword() -> Optional[Crossword]:
     with database() as db:
         res = db.execute(
-            "SELECT * FROM user_crossword WHERE state = 'active'"
+            "SELECT * FROM crossword WHERE user_state = 'active'"
         ).fetchone()
-        return UserCrossword.from_row(res) if res else None
+        return Crossword.from_row(res, []) if res else None
 
 
 def stop_crossword(style: CrosswordStyle, number: int):
     with database() as db:
         db.execute(
             """
-            UPDATE user_crossword
-            SET state = 'inactive'
+            UPDATE crossword
+            SET user_state = 'inactive'
             WHERE style = ? AND number = ?
             """,
             (style, number),
@@ -255,16 +221,16 @@ def get_crossword(style: CrosswordStyle, number: int) -> Optional[Crossword]:
         return Crossword.from_row(res, clues_res) if res else None
 
 
-def get_all_user_crosswords() -> list[UserCrossword]:
+def get_all_crosswords() -> list[Crossword]:
     with database() as db:
         res = db.execute(
             """
             SELECT *
-            FROM user_crossword
+            FROM crossword
             """,
         ).fetchall()
 
-        return [UserCrossword.from_row(row) for row in res]
+        return [Crossword.from_row(row, []) for row in res]
 
 
 def solve_clue(
@@ -277,12 +243,17 @@ def solve_clue(
     with database() as db:
         db.execute(
             """
-            INSERT INTO user_clue
-            (direction, number, crossword_style, crossword_number, user_solution)
-            VALUES
-            (:direction, :number, :crossword_style, :crossword_number, :user_solution)
-            ON CONFLICT DO UPDATE SET
-            user_solution = :user_solution
+            UPDATE clue
+            SET
+            user_solution = upper(:user_solution)
+            WHERE
+            crossword_style = :crossword_style
+            AND
+            crossword_number = :crossword_number
+            AND
+            number = :number
+            AND
+            direction = :direction
             """,
             {
                 "direction": direction,

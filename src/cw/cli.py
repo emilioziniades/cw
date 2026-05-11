@@ -154,5 +154,5 @@ def check():
 
 @cli.command()
 def list():
-    crosswords = db.get_all_user_crosswords()
+    crosswords = db.get_all_crosswords()
     display.print_crossword_list(crosswords)
