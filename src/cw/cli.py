@@ -1,12 +1,15 @@
+import logging
+from dataclasses import dataclass
 from datetime import date
 from typing import Optional
-import click
-from cw.crossword import Crossword
-from cw.fetch import fetch as cw_fetch, crossword_number_from_date
-from cw import db, display
-from cw.crossword import CrosswordStyle
+import re
 
-import logging
+import click
+
+from cw import db, display
+from cw.crossword import Crossword, CrosswordStyle, Direction
+from cw.fetch import crossword_number_from_date
+from cw.fetch import fetch as cw_fetch
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +85,74 @@ def show():
     if crossword is None:
         raise ValueError("The active crossword does not exist")
 
+    # TODO: use user solution to populate crossword
     display.print_crossword(crossword)
 
 
+@dataclass
+class ClueArgument:
+    direction: Direction
+    number: int
+
+
+class ClueParamType(click.ParamType):
+    def convert(self, value, param, ctx):
+        match = re.match("^(\\d*)([a-zA-Z]*)$", value)
+        if match is None:
+            self.fail(
+                f"Failed to parse {value} as clue number + direction. Expected 1d or 22a"
+            )
+
+        groups = match.groups()
+        if len(groups) != 2:
+            self.fail(
+                f"Failed to parse {value} as clue number + direction. Expected 1d or 22a"
+            )
+
+        number = groups[0]
+        direction = groups[1]
+
+        try:
+            number = int(number)
+
+            if direction.lower() == "d":
+                direction = Direction.DOWN
+            elif direction.lower() == "a":
+                direction = Direction.ACROSS
+            else:
+                self.fail(f"Unrecognized direction: {direction}. Expected a or d")
+
+            return ClueArgument(number=number, direction=direction)
+
+        except Exception as ex:
+            self.fail(str(ex))
+
+
+@cli.command()
+@click.argument(
+    "clue",
+    type=ClueParamType(),
+    required=True,
+)
+@click.argument("solution", type=str, required=True)
+def solve(clue: ClueArgument, solution: str):
+    active = db.get_active_crossword()
+    if active is None:
+        raise Exception("No active crossword. Start a crossword with `cw start`")
+
+    print(clue)
+    print(solution)
+
+    db.solve_clue(clue.direction, clue.number, active.style, active.number, solution)
+    pass
+
+
+@cli.command()
+def check():
+    pass
+
+
+@cli.command()
 def list():
     crosswords = db.get_all_user_crosswords()
     display.print_crossword_list(crosswords)

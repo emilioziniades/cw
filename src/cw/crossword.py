@@ -142,3 +142,19 @@ class UserCrossword:
             number=data["number"],
             state=State(data["state"]),
         )
+
+
+@dataclass(frozen=True)
+class UserClue:
+    direction: Direction
+    number: int
+    user_solution: str
+
+    @staticmethod
+    def from_row(row: sqlite3.Row) -> "UserClue":
+        data = dict(row)
+        return UserClue(
+            direction=data["direction"],
+            number=data["number"],
+            user_solution=data["user_solution"],
+        )

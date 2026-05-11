@@ -9,8 +9,9 @@ import sqlite3
 from contextlib import contextmanager
 import logging
 
+
 from cw.config import config
-from cw.crossword import Crossword, CrosswordStyle, State, UserCrossword
+from cw.crossword import Crossword, CrosswordStyle, State, UserCrossword, Direction
 
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,18 @@ def migrate():
         CREATE UNIQUE INDEX only_one_active
         ON user_crossword (state)
         WHERE state = 'active'
+        """,
+        # TODO: add check solution check(length(solution) = length)
+        """
+        CREATE TABLE IF NOT EXISTS user_clue (
+            direction TEXT NOT NULL,
+            number INTEGER NOT NULL,
+            crossword_style TEXT NOT NULL,
+            crossword_number INTEGER NOT NULL,
+            user_solution TEXT NOT NULL,
+            PRIMARY KEY (direction, number, crossword_style, crossword_number),
+            FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
+        );
         """,
     ]
 
@@ -252,3 +265,30 @@ def get_all_user_crosswords() -> list[UserCrossword]:
         ).fetchall()
 
         return [UserCrossword.from_row(row) for row in res]
+
+
+def solve_clue(
+    direction: Direction,
+    number: int,
+    crossword_style: CrosswordStyle,
+    crossword_number: int,
+    user_solution: str,
+):
+    with database() as db:
+        db.execute(
+            """
+            INSERT INTO user_clue
+            (direction, number, crossword_style, crossword_number, user_solution)
+            VALUES
+            (:direction, :number, :crossword_style, :crossword_number, :user_solution)
+            ON CONFLICT DO UPDATE SET
+            user_solution = :user_solution
+            """,
+            {
+                "direction": direction,
+                "number": number,
+                "crossword_style": crossword_style,
+                "crossword_number": crossword_number,
+                "user_solution": user_solution,
+            },
+        )
