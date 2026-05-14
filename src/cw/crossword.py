@@ -29,7 +29,6 @@ class Clue:
     position_x: int
     position_y: int
     solution: str
-    user_solution: str
 
     @staticmethod
     def from_json(data: dict) -> "Clue":
@@ -40,7 +39,6 @@ class Clue:
             position_x=data["position"]["x"],
             position_y=data["position"]["y"],
             solution=data["solution"],
-            user_solution=" " * len(data["solution"]),
         )
 
     @staticmethod
@@ -53,7 +51,6 @@ class Clue:
             position_x=data["position_x"],
             position_y=data["position_y"],
             solution=data["solution"],
-            user_solution=data["user_solution"],
         )
 
     def __str__(self):
@@ -126,3 +123,23 @@ class Crossword:
                 raise ValueError(
                     f"Clue {clue.number}-{clue.direction} does not fit in crossword {self.n_columns}x{self.n_rows}"
                 )
+
+
+@dataclass(frozen=True)
+class Letter:
+    crossword_style: CrosswordStyle
+    crossword_number: int
+    position_x: int
+    position_y: int
+    letter: str
+
+    @staticmethod
+    def from_row(row: sqlite3.Row) -> "Letter":
+        data = dict(row)
+        return Letter(
+            crossword_style=data["crossword_style"],
+            crossword_number=data["crossword_number"],
+            position_x=data["position_x"],
+            position_y=data["position_y"],
+            letter=data["letter"],
+        )

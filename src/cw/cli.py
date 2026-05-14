@@ -1,8 +1,8 @@
 import logging
+import re
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
-import re
 
 import click
 
@@ -85,7 +85,6 @@ def show():
     if crossword is None:
         raise ValueError("The active crossword does not exist")
 
-    # TODO: use user solution to populate crossword
     display.print_crossword(crossword)
 
 
@@ -140,11 +139,13 @@ def solve(clue: ClueArgument, solution: str):
     if active is None:
         raise Exception("No active crossword. Start a crossword with `cw start`")
 
-    print(clue)
-    print(solution)
-
-    db.solve_clue(clue.direction, clue.number, active.style, active.number, solution)
-    pass
+    try:
+        db.solve_clue(
+            clue.direction, clue.number, active.style, active.number, solution
+        )
+    except Exception as ex:
+        logger.error(ex)
+        exit(1)
 
 
 @cli.command()

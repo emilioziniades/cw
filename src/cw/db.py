@@ -4,6 +4,7 @@ Module for storing all crossword data in a sqlite database
 - stores crossword JSON into a sqlite database
 """
 
+from itertools import repeat
 from typing import Generator, Optional
 import sqlite3
 from contextlib import contextmanager
@@ -11,7 +12,7 @@ import logging
 
 
 from cw.config import config
-from cw.crossword import Crossword, CrosswordStyle, Direction
+from cw.crossword import Crossword, CrosswordStyle, Direction, Clue, Letter
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,6 @@ def migrate():
             position_x INTEGER NOT NULL,
             position_y INTEGER NOT NULL,
             solution TEXT NOT NULL,
-            user_solution TEXT NOT NULL CHECK(length(user_solution) = length(solution)),
             PRIMARY KEY (direction, number, crossword_style, crossword_number),
             FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
         );
@@ -73,7 +73,18 @@ def migrate():
         """
         CREATE UNIQUE INDEX only_one_active
         ON crossword (user_state)
-        WHERE user_state = 'active'
+        WHERE user_state = 'active';
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS user_input (
+            crossword_style TEXT NOT NULL,
+            crossword_number INTEGER NOT NULL,
+            position_x INTEGER NOT NULL,
+            position_y INTEGER NOT NULL,
+            letter TEXT NOT NULL CHECK(length(letter) = 1 AND letter = UPPER(letter)),
+            PRIMARY KEY (position_x, position_y, crossword_style, crossword_number),
+            FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
+        );
         """,
     ]
 
@@ -113,9 +124,9 @@ def add_crossword(crossword: Crossword):
         db.executemany(
             """
             INSERT INTO clue
-            (crossword_style, crossword_number, direction, number, clue, position_x, position_y, solution, user_solution)
+            (crossword_style, crossword_number, direction, number, clue, position_x, position_y, solution)
             VALUES
-            (:crossword_style, :crossword_number, :direction, :number, :clue, :position_x, :position_y, :solution, :user_solution)
+            (:crossword_style, :crossword_number, :direction, :number, :clue, :position_x, :position_y, :solution)
             """,
             [
                 {
@@ -127,7 +138,6 @@ def add_crossword(crossword: Crossword):
                     "position_x": clue.position_x,
                     "position_y": clue.position_y,
                     "solution": clue.solution,
-                    "user_solution": clue.user_solution,
                 }
                 for clue in crossword.clues
             ],
@@ -233,6 +243,104 @@ def get_all_crosswords() -> list[Crossword]:
         return [Crossword.from_row(row, []) for row in res]
 
 
+def get_clue(
+    direction: Direction,
+    number: int,
+    crossword_style: CrosswordStyle,
+    crossword_number: int,
+):
+    with database() as db:
+        res = db.execute(
+            """
+            SELECT *
+            FROM clue
+            WHERE crossword_style = ?
+            AND crossword_number = ?
+            AND number = ?
+            AND direction = ?
+            """,
+            (crossword_style, crossword_number, number, direction),
+        ).fetchone()
+
+        return Clue.from_row(res)
+
+
+def add_letter(
+    crossword_style: CrosswordStyle,
+    crossword_number: int,
+    position_x: int,
+    position_y: int,
+    letter: str,
+):
+    with database() as db:
+        db.execute(
+            """
+            INSERT INTO user_input
+            (crossword_style, crossword_number, position_x, position_y, letter)
+            VALUES
+            (:crossword_style, :crossword_number, :position_x, :position_y, :letter)
+            ON CONFLICT
+            DO UPDATE
+            SET letter = :letter;
+            """,
+            {
+                "crossword_style": crossword_style,
+                "crossword_number": crossword_number,
+                "position_x": position_x,
+                "position_y": position_y,
+                "letter": letter,
+            },
+        )
+
+
+def get_letter(
+    crossword_style: CrosswordStyle,
+    crossword_number: int,
+    position_x: int,
+    position_y: int,
+) -> Letter:
+    with database() as db:
+        res = db.execute(
+            """
+            SELECT * 
+            FROM user_input
+            WHERE crossword_style = :crossword_style
+            AND crossword_number = :crossword_number
+            AND position_x = :position_x
+            AND position_y = :position_y
+            """,
+            {
+                "crossword_style": crossword_style,
+                "crossword_number": crossword_number,
+                "position_x": position_x,
+                "position_y": position_y,
+            },
+        ).fetchone()
+
+        return Letter.from_row(res)
+
+
+def get_letters(
+    crossword_style: CrosswordStyle,
+    crossword_number: int,
+) -> list[Letter]:
+    with database() as db:
+        res = db.execute(
+            """
+            SELECT * 
+            FROM user_input
+            WHERE crossword_style = :crossword_style
+            AND crossword_number = :crossword_number
+            """,
+            {
+                "crossword_style": crossword_style,
+                "crossword_number": crossword_number,
+            },
+        ).fetchall()
+
+        return [Letter.from_row(row) for row in res]
+
+
 def solve_clue(
     direction: Direction,
     number: int,
@@ -240,26 +348,20 @@ def solve_clue(
     crossword_number: int,
     user_solution: str,
 ):
-    with database() as db:
-        db.execute(
-            """
-            UPDATE clue
-            SET
-            user_solution = upper(:user_solution)
-            WHERE
-            crossword_style = :crossword_style
-            AND
-            crossword_number = :crossword_number
-            AND
-            number = :number
-            AND
-            direction = :direction
-            """,
-            {
-                "direction": direction,
-                "number": number,
-                "crossword_style": crossword_style,
-                "crossword_number": crossword_number,
-                "user_solution": user_solution,
-            },
-        )
+    clue = get_clue(direction, number, crossword_style, crossword_number)
+    length = len(clue.solution)
+
+    if len(user_solution) != length:
+        raise ValueError(f"'{user_solution}' should be {length}")
+
+    match clue.direction:
+        case Direction.ACROSS:
+            xs = range(clue.position_x, clue.position_x + length)
+            ys = repeat(clue.position_y, length)
+        case Direction.DOWN:
+            xs = repeat(clue.position_x, length)
+            ys = range(clue.position_y, clue.position_y + length)
+
+    for x, y, letter in zip(xs, ys, user_solution):
+        # this inserts in multiple transactions. it should be one
+        add_letter(crossword_style, crossword_number, x, y, letter.upper())

@@ -4,14 +4,16 @@ Module for displaying crossword in terminal
 
 import os
 from dataclasses import dataclass
+from itertools import repeat
 from typing import Optional
 
 from rich import print
 from rich.columns import Columns
-from rich.table import Table
 from rich.console import Console
+from rich.table import Table
 
 from cw.crossword import Crossword, Direction, State
+from cw.db import get_letters
 
 TL = "┌"
 TR = "┐"
@@ -41,7 +43,7 @@ SUPERSCRIPTS = {
 }
 
 
-@dataclass(frozen=True)
+@dataclass
 class Cell:
     clue_number: Optional[int] = None
     letter: Optional[str] = None
@@ -164,26 +166,39 @@ def print_crossword(cw: Crossword):
 
 
 def crossword_to_grid(cw: Crossword) -> Grid:
-    grid = [[Cell() for _ in range(cw.n_columns)] for _ in range(cw.n_rows)]
+    # default all cells to black squares
+    grid = [
+        [Cell(is_black_square=True) for _ in range(cw.n_columns)]
+        for _ in range(cw.n_rows)
+    ]
 
+    letters = {
+        (letter.position_x, letter.position_y): letter.letter
+        for letter in get_letters(cw.style, cw.number)
+    }
+
+    # paint white cells, letters and numbers
     for clue in cw.clues:
         length = len(clue.solution)
 
-        grid[clue.position_y][clue.position_x] = Cell(
-            clue_number=clue.number, is_black_square=False
-        )
+        x0 = clue.position_x
+        y0 = clue.position_y
 
-        if clue.direction is Direction.DOWN:
-            x = clue.position_x
-            for y in range(clue.position_y + 1, clue.position_y + length):
-                if grid[y][x].is_black_square:
-                    grid[y][x] = Cell(letter=" ", is_black_square=False)
+        grid[y0][x0].is_black_square = False
+        grid[y0][x0].clue_number = clue.number
+        grid[y0][x0].letter = letters.get((x0, y0))
 
-        elif clue.direction is Direction.ACROSS:
-            y = clue.position_y
-            for x in range(clue.position_x + 1, clue.position_x + length):
-                if grid[y][x].is_black_square:
-                    grid[y][x] = Cell(letter=" ", is_black_square=False)
+        match clue.direction:
+            case Direction.ACROSS:
+                xs = range(clue.position_x + 1, clue.position_x + length)
+                ys = repeat(y0, length - 1)
+            case Direction.DOWN:
+                xs = repeat(x0, length - 1)
+                ys = range(clue.position_y + 1, clue.position_y + length)
+
+        for x, y in zip(xs, ys):
+            grid[y][x].is_black_square = False
+            grid[y][x].letter = letters.get((x, y))
 
     return Grid(grid)
 
