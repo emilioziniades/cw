@@ -2,7 +2,7 @@ data_dir := "~/.local/share/cw"
 cache_dir := "~/.cache/cw"
 
 lint:
-    uv run pyright
+    ty check
     ruff check
 
 clean:
