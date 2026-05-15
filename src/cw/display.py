@@ -1,5 +1,8 @@
 """
 Module for displaying crossword in terminal
+
+TODO: this is getting a bit weird, because the logic for checking correctness has
+now been mushed into the logic for rendering the grid. ew ew ew.
 """
 
 import os
@@ -50,13 +53,10 @@ class Cell:
     solution_letter: Optional[str] = None
     is_black_square: bool = True
 
-    def display(self, check: bool = False):
+    def display(self, colour: Optional[str] = None):
         def style(inner: str):
-            if check:
-                if self.user_letter == self.solution_letter:
-                    return inner
-                else:
-                    return f"[red]{inner}[/red]"
+            if colour:
+                return f"[{colour}]{inner}[/{colour}]"
             else:
                 return inner
 
@@ -89,13 +89,27 @@ class Cell:
 class Grid:
     cells: list[list[Cell]]
 
-    # NOTE: assumes cell contents are one row high
+    # NOTE: assumes that (1) cell contents are one row high
+    # and (2) cell width is 4 characters wide
     def display(self, check: bool = False):
         CELL_WIDTH = 4
         grid = ""
 
         n_rows = len(self.cells)
         n_cols = len(self.cells[0])
+
+        solved = self.is_correct()
+
+        def get_colour(cell: Cell) -> Optional[str]:
+            if check:
+                if solved:
+                    return "green"
+                elif cell.user_letter != cell.solution_letter:
+                    return "red"
+                else:
+                    return None
+            else:
+                return None
 
         for r, row in enumerate(self.cells):
             # TOP
@@ -123,7 +137,7 @@ class Grid:
             # MIDDLE
             for c, col in enumerate(row):
                 grid += V
-                grid += col.display(check=check)
+                grid += col.display(colour=get_colour(col))
 
                 if c == n_cols - 1:
                     grid += V
@@ -146,6 +160,11 @@ class Grid:
                         grid += BR
 
         return grid
+
+    def is_correct(self):
+        return all(
+            [c.user_letter == c.solution_letter for cell in self.cells for c in cell]
+        )
 
 
 def print_crossword(cw: Crossword, check: bool = False):

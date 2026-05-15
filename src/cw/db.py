@@ -2,6 +2,8 @@
 Module for storing all crossword data in a sqlite database
 
 - stores crossword JSON into a sqlite database
+
+#TODO: alot of functions with many parameters where we could just pass the Crossword/Clue object
 """
 
 from itertools import repeat
@@ -51,7 +53,7 @@ def migrate():
             name TEXT NOT NULL,
             n_rows INTEGER NOT NULL,
             n_columns INTEGER NOT NULL,
-            user_state TEXT NOT NULL,
+            user_state TEXT NOT NULL CHECK(user_state IN ('active', 'inactive', 'complete')),
             PRIMARY KEY (style, number),
             UNIQUE (number, style)
         );
@@ -352,7 +354,7 @@ def solve_clue(
     length = len(clue.solution)
 
     if len(user_solution) != length:
-        raise ValueError(f"'{user_solution}' should be {length}")
+        raise ValueError(f"'{user_solution}' should be {length} characters")
 
     match clue.direction:
         case Direction.ACROSS:
@@ -365,3 +367,16 @@ def solve_clue(
     for x, y, letter in zip(xs, ys, user_solution):
         # this inserts in multiple transactions. it should be one
         add_letter(crossword_style, crossword_number, x, y, letter.upper())
+
+
+def mark_completed(crossword: Crossword):
+    with database() as db:
+        db.execute(
+            """
+                UPDATE crossword
+                SET user_state = 'complete'
+                WHERE style = ? AND number = ?
+            """,
+            (crossword.style, crossword.number),
+        )
+    pass

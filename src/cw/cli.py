@@ -151,6 +151,12 @@ def solve(clue: ClueArgument, solution: str):
 
 
 @cli.command()
+def list():
+    crosswords = db.get_all_crosswords()
+    display.print_crossword_list(crosswords)
+
+
+@cli.command()
 def check():
     try:
         active = db.get_active_crossword()
@@ -164,6 +170,17 @@ def check():
         # TODO: if crossword is green, mark it as completed and tell the user
         display.print_crossword(crossword, check=True)
 
+        grid = display.crossword_to_grid(crossword)
+
+        # TODO: this is the second time we calculate is_correct. Obviously performance isn't
+        # really an issue but it is a huge code smell that a class from `cw.display` has solving logic
+        if grid.is_correct():
+            logger.info("SUCCESS! Crossword has been marked as completed")
+            db.mark_completed(crossword)
+        else:
+            logger.info("Puzzle is incomplete or has wrong answers")
+            logger.info("Wrong letters are in red")
+
     except Exception as ex:
         logger.error(ex)
         exit(1)
@@ -171,11 +188,10 @@ def check():
 
 @cli.command()
 def reveal():
+    # TODO: fill in missing cells in blue and wrong cells in yellow
     pass
 
 
 @cli.command()
-def list():
-    crosswords = db.get_all_crosswords()
-    display.print_crossword_list(crosswords)
-    # TODO: fill in missing cells in blue and wrong cells in yellow
+def clear():
+    pass
