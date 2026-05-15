@@ -13,6 +13,8 @@ from cw.fetch import fetch as cw_fetch
 
 logger = logging.getLogger(__name__)
 
+# TODO: standardize error message here e.g. active check and error log
+
 
 @click.group()
 @click.option("-v", "--verbose", is_flag=True)
@@ -135,11 +137,11 @@ class ClueParamType(click.ParamType):
 )
 @click.argument("solution", type=str, required=True)
 def solve(clue: ClueArgument, solution: str):
-    active = db.get_active_crossword()
-    if active is None:
-        raise Exception("No active crossword. Start a crossword with `cw start`")
-
     try:
+        active = db.get_active_crossword()
+        if active is None:
+            raise Exception("No active crossword. Start a crossword with `cw start`")
+
         db.solve_clue(
             clue.direction, clue.number, active.style, active.number, solution
         )
@@ -150,6 +152,25 @@ def solve(clue: ClueArgument, solution: str):
 
 @cli.command()
 def check():
+    try:
+        active = db.get_active_crossword()
+        if active is None:
+            raise Exception("No active crossword. Start a crossword with `cw start`")
+
+        crossword = db.get_crossword(active.style, active.number)
+        if crossword is None:
+            raise ValueError("The active crossword does not exist")
+
+        # TODO: if crossword is green, mark it as completed and tell the user
+        display.print_crossword(crossword, check=True)
+
+    except Exception as ex:
+        logger.error(ex)
+        exit(1)
+
+
+@cli.command()
+def reveal():
     pass
 
 
@@ -157,3 +178,4 @@ def check():
 def list():
     crosswords = db.get_all_crosswords()
     display.print_crossword_list(crosswords)
+    # TODO: fill in missing cells in blue and wrong cells in yellow

@@ -46,14 +46,24 @@ SUPERSCRIPTS = {
 @dataclass
 class Cell:
     clue_number: Optional[int] = None
-    letter: Optional[str] = None
+    user_letter: Optional[str] = None
+    solution_letter: Optional[str] = None
     is_black_square: bool = True
 
-    def __str__(self):
+    def display(self, check: bool = False):
+        def style(inner: str):
+            if check:
+                if self.user_letter == self.solution_letter:
+                    return inner
+                else:
+                    return f"[red]{inner}[/red]"
+            else:
+                return inner
+
         if self.is_black_square:
             return B * 4
 
-        letter = self.letter or S
+        letter = style(self.user_letter or S)
 
         if not self.clue_number:
             return f"{S}{S}{letter}{S}"
@@ -80,8 +90,8 @@ class Grid:
     cells: list[list[Cell]]
 
     # NOTE: assumes cell contents are one row high
-    def __str__(self):
-        cell_width = len(str(self.cells[0][0]))
+    def display(self, check: bool = False):
+        CELL_WIDTH = 4
         grid = ""
 
         n_rows = len(self.cells)
@@ -101,7 +111,7 @@ class Grid:
                 else:
                     grid += CC
 
-                grid += H * cell_width
+                grid += H * CELL_WIDTH
 
             if r == 0:
                 grid += TR
@@ -113,7 +123,7 @@ class Grid:
             # MIDDLE
             for c, col in enumerate(row):
                 grid += V
-                grid += str(col)
+                grid += col.display(check=check)
 
                 if c == n_cols - 1:
                     grid += V
@@ -130,7 +140,7 @@ class Grid:
                     else:
                         grid += CU
 
-                    grid += H * cell_width
+                    grid += H * CELL_WIDTH
 
                     if c == n_cols - 1:
                         grid += BR
@@ -138,7 +148,7 @@ class Grid:
         return grid
 
 
-def print_crossword(cw: Crossword):
+def print_crossword(cw: Crossword, check: bool = False):
     grid = crossword_to_grid(cw)
 
     acrosses = ["[b][u]Across[/b][/u]"] + list(
@@ -156,7 +166,7 @@ def print_crossword(cw: Crossword):
     print(
         Columns(
             [
-                str(grid),
+                grid.display(check=check),
                 os.linesep.join(acrosses),
                 os.linesep.join(downs),
             ],
@@ -172,7 +182,7 @@ def crossword_to_grid(cw: Crossword) -> Grid:
         for _ in range(cw.n_rows)
     ]
 
-    letters = {
+    user_letters = {
         (letter.position_x, letter.position_y): letter.letter
         for letter in get_letters(cw.style, cw.number)
     }
@@ -186,7 +196,8 @@ def crossword_to_grid(cw: Crossword) -> Grid:
 
         grid[y0][x0].is_black_square = False
         grid[y0][x0].clue_number = clue.number
-        grid[y0][x0].letter = letters.get((x0, y0))
+        grid[y0][x0].user_letter = user_letters.get((x0, y0))
+        grid[y0][x0].solution_letter = clue.solution[0]
 
         match clue.direction:
             case Direction.ACROSS:
@@ -196,9 +207,10 @@ def crossword_to_grid(cw: Crossword) -> Grid:
                 xs = repeat(x0, length - 1)
                 ys = range(clue.position_y + 1, clue.position_y + length)
 
-        for x, y in zip(xs, ys):
+        for x, y, letter in zip(xs, ys, clue.solution[1:]):
             grid[y][x].is_black_square = False
-            grid[y][x].letter = letters.get((x, y))
+            grid[y][x].user_letter = user_letters.get((x, y))
+            grid[y][x].solution_letter = letter
 
     return Grid(grid)
 
