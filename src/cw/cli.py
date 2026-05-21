@@ -59,6 +59,7 @@ def start(style: CrosswordStyle, number: Optional[int]):
     if number is None:
         number = crossword_number_from_date(style, date.today())
     db.start_crossword(style, number)
+    print_current_crossword()
 
 
 @cli.command()
@@ -76,18 +77,7 @@ def stop(style: CrosswordStyle, number: Optional[int]):
 
 @cli.command()
 def show():
-    active = db.get_active_crossword()
-    if active is None:
-        logger.fatal(
-            "No active crossword. Use `cw start <style> <number>` to start a puzzle"
-        )
-        exit(1)
-
-    crossword = db.get_crossword(active.style, active.number)
-    if crossword is None:
-        raise ValueError("The active crossword does not exist")
-
-    display.print_crossword(crossword)
+    print_current_crossword()
 
 
 @dataclass
@@ -145,6 +135,9 @@ def solve(clue: ClueArgument, solution: str):
         db.solve_clue(
             clue.direction, clue.number, active.style, active.number, solution
         )
+
+        print_current_crossword()
+
     except Exception as ex:
         logger.error(ex)
         exit(1)
@@ -195,3 +188,18 @@ def reveal():
 @cli.command()
 def clear():
     pass
+
+
+def print_current_crossword():
+    active = db.get_active_crossword()
+    if active is None:
+        logger.fatal(
+            "No active crossword. Use `cw start <style> <number>` to start a puzzle"
+        )
+        exit(1)
+
+    crossword = db.get_crossword(active.style, active.number)
+    if crossword is None:
+        raise ValueError("The active crossword does not exist")
+
+    display.print_crossword(crossword)
