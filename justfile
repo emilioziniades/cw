@@ -5,6 +5,9 @@ lint:
     ty check
     ruff check
 
+test:
+    uv run pytest
+
 clean:
     rm -rf {{ data_dir }}
 
