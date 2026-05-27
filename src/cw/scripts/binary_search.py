@@ -8,12 +8,12 @@ The idea is to do a binary search with caching to avoid hammering the Guardian w
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from typing import Generic, Optional, TypeVar
 from pprint import pprint
+from typing import Generic, Optional, TypeVar
 
+from cw.calendar import days_between, is_sunday
 from cw.crossword import CrosswordStyle
 from cw.fetch import fetch, n_sundays_between
-from cw.calendar import days_between, is_sunday
 
 logging.basicConfig(
     level=logging.DEBUG,

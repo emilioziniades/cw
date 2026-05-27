@@ -1,8 +1,8 @@
-from cw.calendar import days_between
 from datetime import date
 
 import pytest
 
+from cw.calendar import days_between
 from cw.fetch import n_sundays_between
 
 

@@ -1,5 +1,5 @@
-from typing import Iterator
 from datetime import date, timedelta
+from typing import Iterator
 
 
 def n_sundays_between(start_date: date, end_date: date) -> int:

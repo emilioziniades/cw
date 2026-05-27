@@ -1,6 +1,6 @@
+import sqlite3
 from dataclasses import dataclass
 from enum import StrEnum, auto
-import sqlite3
 from typing import assert_never
 
 

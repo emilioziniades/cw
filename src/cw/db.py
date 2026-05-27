@@ -6,16 +6,14 @@ Module for storing all crossword data in a sqlite database
 #TODO: alot of functions with many parameters where we could just pass the Crossword/Clue object
 """
 
-from itertools import repeat
-from typing import Generator, Optional
+import logging
 import sqlite3
 from contextlib import contextmanager
-import logging
-
+from itertools import repeat
+from typing import Generator, Optional
 
 from cw.config import config
-from cw.crossword import Crossword, CrosswordStyle, Direction, Clue, Letter
-
+from cw.crossword import Clue, Crossword, CrosswordStyle, Direction, Letter
 
 logger = logging.getLogger(__name__)
 

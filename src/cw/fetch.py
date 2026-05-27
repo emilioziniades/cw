@@ -6,18 +6,17 @@ Module for fetching crossword data from the Guardian website.
 - transforms html into crossword json
 """
 
-from typing import Optional
-from datetime import date
 import json
 import logging
+from datetime import date
+from typing import Optional
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
+from cw.calendar import n_sundays_between
 from cw.config import config
 from cw.crossword import CrosswordStyle
-from cw.calendar import n_sundays_between
-
 
 logger = logging.getLogger(__name__)
 

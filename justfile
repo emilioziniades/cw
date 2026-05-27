@@ -8,6 +8,10 @@ lint:
 test:
     uv run pytest
 
+format:
+    ruff check --select I --fix .
+    ruff format .
+
 clean:
     rm -rf {{ data_dir }}
 
