@@ -16,6 +16,7 @@ import requests
 
 from cw.config import config
 from cw.crossword import CrosswordStyle
+from cw.calendar import n_sundays_between
 
 
 logger = logging.getLogger(__name__)
@@ -70,11 +71,13 @@ def puzzle_json_from_html(html: str) -> dict:
 
 def crossword_number_from_date(style: CrosswordStyle, d: date) -> int:
     MINI_NUMBER_ONE = date(2025, 12, 17)
+    QUICK_NUMBER_TEN_THOUSAND = date(2002, 5, 23)
 
     if style is CrosswordStyle.MINI:
         duration = d - MINI_NUMBER_ONE
         return duration.days
     elif style is CrosswordStyle.QUICK:
-        raise NotImplementedError()
+        duration = d - QUICK_NUMBER_TEN_THOUSAND
+        return duration.days + 10_000 - n_sundays_between(QUICK_NUMBER_TEN_THOUSAND, d)
     elif style is CrosswordStyle.CRYPTIC:
         raise NotImplementedError()
