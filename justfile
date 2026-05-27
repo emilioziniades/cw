@@ -1,6 +1,8 @@
 data_dir := "~/.local/share/cw"
 cache_dir := "~/.cache/cw"
 
+all: format lint test
+
 lint:
     ty check
     ruff check
