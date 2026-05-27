@@ -73,11 +73,47 @@ def crossword_number_from_date(style: CrosswordStyle, d: date) -> int:
     MINI_NUMBER_ONE = date(2025, 12, 17)
     QUICK_NUMBER_TEN_THOUSAND = date(2002, 5, 23)
 
+    QUICK_DATES_MISSING_PUZZLES = [
+        date(2002, 12, 25),
+        date(2002, 12, 26),
+        date(2003, 12, 25),
+        date(2003, 12, 26),
+        date(2004, 12, 25),
+        date(2005, 12, 26),
+        date(2006, 12, 25),
+        date(2006, 12, 26),
+        date(2007, 12, 25),
+        date(2007, 12, 26),
+        date(2008, 12, 25),
+        date(2008, 12, 26),
+        date(2009, 12, 25),
+        date(2009, 12, 26),
+        date(2010, 12, 21),
+        date(2012, 12, 25),
+        date(2013, 12, 25),
+        date(2014, 12, 25),
+        date(2015, 12, 25),
+        date(2017, 12, 25),
+        date(2018, 12, 25),
+        date(2019, 12, 25),
+        date(2020, 12, 25),
+        date(2021, 12, 25),
+        date(2023, 12, 25),
+        date(2024, 12, 25),
+        date(2025, 12, 25),
+    ]
+
     if style is CrosswordStyle.MINI:
         duration = d - MINI_NUMBER_ONE
         return duration.days
     elif style is CrosswordStyle.QUICK:
         duration = d - QUICK_NUMBER_TEN_THOUSAND
-        return duration.days + 10_000 - n_sundays_between(QUICK_NUMBER_TEN_THOUSAND, d)
+        days_missing_puzzles = [i for i in QUICK_DATES_MISSING_PUZZLES if d >= i]
+        return (
+            duration.days
+            + 10_000
+            - n_sundays_between(QUICK_NUMBER_TEN_THOUSAND, d)
+            - len(days_missing_puzzles)
+        )
     elif style is CrosswordStyle.CRYPTIC:
         raise NotImplementedError()
