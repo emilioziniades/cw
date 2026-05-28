@@ -12,8 +12,8 @@ def main():
     END = Puzzle(17_489, date(2026, 5, 26))
     STYLE = CrosswordStyle.QUICK
 
-    missing_days = binary_search(START, END, STYLE)
-    pprint(missing_days)
+    missing_days, extra_days = binary_search(START, END, STYLE)
+    pprint({"missing": missing_days, "extra": extra_days})
 
 
 if __name__ == "__main__":

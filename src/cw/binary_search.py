@@ -41,12 +41,18 @@ class Queue(Generic[T]):
             return None
 
 
-def binary_search(start: Puzzle, end: Puzzle, style: CrosswordStyle) -> list[date]:
+def binary_search(
+    start: Puzzle,
+    end: Puzzle,
+    style: CrosswordStyle,
+    known_dates: dict[int, date] = {},
+) -> tuple[list[date], list[date]]:
     """
     Performs a binary search for dates that should have crossword puzzles but do not
     """
     queue: Queue[tuple[Puzzle, Puzzle]] = Queue()
     all_missing_days = []
+    all_extra_days = []
 
     queue.push((start, end))
 
@@ -63,28 +69,39 @@ def binary_search(start: Puzzle, end: Puzzle, style: CrosswordStyle) -> list[dat
         if expected_end_number == end.number:
             logger.debug("No missing crosswords in this window")
 
-        # We cannot narrow down our search any more, and the non-Sunday days between
-        # start.date and end.date are the missed days!
+        # We cannot narrow down our search any more
         elif start.number + 1 == end.number:
-            missing_days = filter(
-                lambda d: not is_sunday(d),
-                days_between(start.date, end.date),
-            )
-            logger.debug("Found days missing puzzles: %s", missing_days)
-            all_missing_days += missing_days
+            # We have two puzzles with the same date
+            if start.date == end.date:
+                logger.debug("Found day with extra puzzle: %s", start)
+                all_extra_days.append(start.date)
+            # the non-Sunday days between start.date and end.date are the missed days
+            else:
+                missing_days = list(
+                    filter(
+                        lambda d: not is_sunday(d),
+                        days_between(start.date, end.date),
+                    )
+                )
+                logger.debug("Found days missing puzzles: %s", missing_days)
+                all_missing_days += missing_days
 
         # There is at least one missing quick crossword in this window. Narrow down the search
         # more
-        elif expected_end_number > end.number:
+        elif expected_end_number != end.number:
             logger.debug(
                 "%d missing crosswords in this window", expected_end_number - end.number
             )
 
             middle_number = (end.number - start.number) // 2 + start.number
-            middle_crossword = fetch(middle_number, style)
-            middle_date = datetime.fromtimestamp(
-                middle_crossword["date"] / 1000.0, tz=timezone.utc
-            ).date()
+            if middle_number in known_dates:
+                logger.debug("%s %s is in list of known dates", style, middle_number)
+                middle_date = known_dates[middle_number]
+            else:
+                middle_crossword = fetch(middle_number, style)
+                middle_date = datetime.fromtimestamp(
+                    middle_crossword["date"] / 1000.0, tz=timezone.utc
+                ).date()
 
             middle = Puzzle(middle_number, middle_date)
             queue.push((start, middle))
@@ -96,4 +113,4 @@ def binary_search(start: Puzzle, end: Puzzle, style: CrosswordStyle) -> list[dat
     logger.info(
         "Found %d missing days: %s", len(all_missing_days), sorted(all_missing_days)
     )
-    return all_missing_days
+    return (all_missing_days, all_extra_days)
