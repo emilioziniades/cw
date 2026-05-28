@@ -16,6 +16,10 @@ from cw.fetch import crossword_number_from_date
         (CrosswordStyle.QUICK, date(2026, 5, 18), 17482),
         (CrosswordStyle.QUICK, date(2015, 3, 24), 14000),
         (CrosswordStyle.QUICK, date(2021, 8, 18), 16000),
+        (CrosswordStyle.CRYPTIC, date(2026, 5, 18), 30009),
+        (CrosswordStyle.CRYPTIC, date(2000, 9, 11), 22000),
+        (CrosswordStyle.CRYPTIC, date(2023, 2, 22), 29000),
+        (CrosswordStyle.CRYPTIC, date(2007, 2, 14), 24000),
     ],
 )
 def test_number_logic(style: CrosswordStyle, date: date, expected_number: int):
