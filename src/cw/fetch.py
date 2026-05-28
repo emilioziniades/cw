@@ -20,6 +20,8 @@ from cw.crossword import CrosswordStyle
 
 logger = logging.getLogger(__name__)
 
+BASE_URL = "https://www.theguardian.com/crosswords"
+
 
 def fetch(number: Optional[int], style: CrosswordStyle):
     if number is None:
@@ -28,15 +30,24 @@ def fetch(number: Optional[int], style: CrosswordStyle):
     logger.info("Fetching %s crossword #%s", style, number)
 
     cached_file = config.cache_dir / "crosswords" / style / f"{number}.html"
-    url = f"https://www.theguardian.com/crosswords/{style}/{number}"
+    url = f"{BASE_URL}/{style}/{number}"
 
     if cached_file.exists():
         logger.debug("Found cached crossword at %s", cached_file)
         html = cached_file.read_text()
     else:
         logger.debug("Fetching crossword from %s", url)
-
         response = requests.get(url)
+        if (
+            response.status_code == requests.codes.not_found
+            and style is CrosswordStyle.CRYPTIC
+        ):
+            # Saturday cryptics are at /prize/{number}, not /cryptic/{number},
+            # so in this special case we have to try both
+            url = f"{BASE_URL}/prize/{number}"
+            logger.debug("Fetching crossword from %s", url)
+            response = requests.get(url)
+
         response.raise_for_status()
         html = response.text
 
