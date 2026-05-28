@@ -9,6 +9,9 @@ def n_sundays_between(start_date: date, end_date: date) -> int:
     if is_sunday(end_date):
         raise ValueError(f"end date {end_date} cannot be Sunday")
 
+    if start_date > end_date:
+        raise ValueError(f"start date {start_date} occurs after end date {end_date}")
+
     days = (end_date - start_date).days
     n_sundays = days // 7
 
