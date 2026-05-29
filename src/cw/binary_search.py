@@ -1,6 +1,6 @@
 """
 The purpose of this module is to identify the dates that contain missed crosswords.
-"Missed" means (1) it is not Sunday and (2) a Quick crossword was not published that day
+"Missed" means (1) it is not Sunday and (2) a crossword was not published that day
 
 The idea is to do a binary search with caching to avoid hammering the Guardian website
 """
