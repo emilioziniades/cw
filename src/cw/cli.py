@@ -1,13 +1,12 @@
+from cw.parameters import ClueParamType, ClueArgument
 import logging
-import re
-from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
 import click
 
 from cw import db, display
-from cw.crossword import Crossword, CrosswordStyle, Direction
+from cw.crossword import Crossword, CrosswordStyle
 from cw.fetch import crossword_number_from_date
 from cw.fetch import fetch as cw_fetch
 
@@ -42,7 +41,7 @@ def cli(verbose: bool):
 )
 @click.argument("number", type=int, default=None)
 def fetch(style: CrosswordStyle, number: int):
-    crossword_json = cw_fetch(number, style)
+    crossword_json = cw_fetch(style, number)
     crossword = Crossword.from_json(crossword_json)
     if not db.has_crossword(crossword):
         db.add_crossword(crossword)
@@ -78,45 +77,6 @@ def stop(style: CrosswordStyle, number: Optional[int]):
 @cli.command()
 def show():
     print_current_crossword()
-
-
-@dataclass
-class ClueArgument:
-    direction: Direction
-    number: int
-
-
-class ClueParamType(click.ParamType):
-    def convert(self, value, param, ctx):
-        match = re.match("^(\\d*)([a-zA-Z]*)$", value)
-        if match is None:
-            self.fail(
-                f"Failed to parse {value} as clue number + direction. Expected 1d or 22a"
-            )
-
-        groups = match.groups()
-        if len(groups) != 2:
-            self.fail(
-                f"Failed to parse {value} as clue number + direction. Expected 1d or 22a"
-            )
-
-        number = groups[0]
-        direction = groups[1]
-
-        try:
-            number = int(number)
-
-            if direction.lower() == "d":
-                direction = Direction.DOWN
-            elif direction.lower() == "a":
-                direction = Direction.ACROSS
-            else:
-                self.fail(f"Unrecognized direction: {direction}. Expected a or d")
-
-            return ClueArgument(number=number, direction=direction)
-
-        except Exception as ex:
-            self.fail(str(ex))
 
 
 @cli.command()
