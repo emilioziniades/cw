@@ -53,7 +53,7 @@ def migrate():
             n_columns INTEGER NOT NULL,
             user_state TEXT NOT NULL CHECK(user_state IN ('active', 'inactive', 'complete')),
             PRIMARY KEY (style, number),
-            UNIQUE (number, style)
+            UNIQUE (style, number)
         );
         """,
         """

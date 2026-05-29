@@ -98,7 +98,7 @@ def binary_search(
                 logger.debug("%s %s is in list of known dates", style, middle_number)
                 middle_date = known_dates[middle_number]
             else:
-                middle_crossword = fetch(middle_number, style)
+                middle_crossword = fetch(style, middle_number)
                 middle_date = datetime.fromtimestamp(
                     middle_crossword["date"] / 1000.0, tz=timezone.utc
                 ).date()

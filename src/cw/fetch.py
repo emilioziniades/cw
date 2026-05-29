@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://www.theguardian.com/crosswords"
 
 
-def fetch(number: Optional[int], style: CrosswordStyle):
+def fetch(style: CrosswordStyle, number: Optional[int]):
     if number is None:
         logger.info("No puzzle number specified, fetching today's puzzle")
         number = crossword_number_from_date(style, date.today())
