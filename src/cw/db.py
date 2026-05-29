@@ -248,7 +248,7 @@ def get_clue(
     number: int,
     crossword_style: CrosswordStyle,
     crossword_number: int,
-):
+) -> Optional[Clue]:
     with database() as db:
         res = db.execute(
             """
@@ -262,7 +262,10 @@ def get_clue(
             (crossword_style, crossword_number, number, direction),
         ).fetchone()
 
-        return Clue.from_row(res)
+        if res:
+            return Clue.from_row(res)
+        else:
+            return None
 
 
 def add_letter(
@@ -349,6 +352,11 @@ def solve_clue(
     user_solution: str,
 ):
     clue = get_clue(direction, number, crossword_style, crossword_number)
+    if clue is None:
+        raise ValueError(
+            f"Clue {number}{direction[0]} does not exist on {crossword_style} #{crossword_number}"
+        )
+
     length = len(clue.solution)
 
     if len(user_solution) != length:
