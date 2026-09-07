@@ -70,9 +70,9 @@ class Cell:
         n1 = S
         n2 = S
 
-        digits = str(self.clue_number).split()
+        digits = list(str(self.clue_number))
 
-        if not 0 < len(digits) < 2:
+        if not 0 < len(digits) <= 2:
             raise ValueError(f"Clue number must be 1 or 2-digits: {self.clue_number}")
 
         if len(digits) == 1:
