@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 
 def n_sundays_between(start_date: date, end_date: date) -> int:
@@ -31,3 +31,7 @@ def days_between(start: date, end: date) -> Iterator[date]:
 
 def is_sunday(d: date) -> bool:
     return d.isoweekday() == 7
+
+
+def today() -> date:
+    return datetime.now(tz=UTC).date()

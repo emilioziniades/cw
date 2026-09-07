@@ -1,10 +1,10 @@
 import logging
 import sys
-from datetime import date
 
 import click
 
 from cw import db, display
+from cw.calendar import today
 from cw.crossword import Crossword, CrosswordStyle
 from cw.fetch import crossword_number_from_date
 from cw.fetch import fetch as cw_fetch
@@ -56,7 +56,7 @@ def fetch(style: CrosswordStyle, number: int):
 @click.argument("number", type=int, default=None)
 def start(style: CrosswordStyle, number: int | None):
     if number is None:
-        number = crossword_number_from_date(style, date.today())
+        number = crossword_number_from_date(style, today())
     db.start_crossword(style, number)
     print_current_crossword()
 
@@ -70,7 +70,7 @@ def start(style: CrosswordStyle, number: int | None):
 @click.argument("number", type=int, default=None)
 def stop(style: CrosswordStyle, number: int | None):
     if number is None:
-        number = crossword_number_from_date(style, date.today())
+        number = crossword_number_from_date(style, today())
     db.stop_crossword(style, number)
 
 

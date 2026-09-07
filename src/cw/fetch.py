@@ -13,7 +13,7 @@ from datetime import date
 import requests
 from bs4 import BeautifulSoup
 
-from cw.calendar import n_sundays_between
+from cw.calendar import n_sundays_between, today
 from cw.config import config
 from cw.crossword import CrosswordStyle
 
@@ -25,7 +25,7 @@ BASE_URL = "https://www.theguardian.com/crosswords"
 def fetch(style: CrosswordStyle, number: int | None):
     if number is None:
         logger.info("No puzzle number specified, fetching today's puzzle")
-        number = crossword_number_from_date(style, date.today())
+        number = crossword_number_from_date(style, today())
     logger.info("Fetching %s crossword #%s", style, number)
 
     cached_file = config.cache_dir / "crosswords" / style / f"{number}.html"
