@@ -60,7 +60,7 @@ class Clue:
             .replace("<i>", "[italic]")
             .replace("</i>", "[/italic]")
         )
-        return f"{self.number}. {clue}"
+        return f"{self.number:>2}. {clue}"
 
 
 @dataclass(frozen=True)
