@@ -34,17 +34,13 @@ class ClueParamType(click.ParamType):
         number = groups[0]
         direction = groups[1]
 
-        try:
-            number = int(number)
+        number = int(number)
 
-            if direction.lower() == "d":
-                direction = Direction.DOWN
-            elif direction.lower() == "a":
-                direction = Direction.ACROSS
-            else:
-                self.fail(f"Unrecognized direction: {direction}. Expected a or d")
+        if direction.lower() == "d":
+            direction = Direction.DOWN
+        elif direction.lower() == "a":
+            direction = Direction.ACROSS
+        else:
+            self.fail(f"Unrecognized direction: {direction}. Expected a or d")
 
-            return ClueArgument(number=number, direction=direction)
-
-        except Exception as ex:
-            self.fail(str(ex))
+        return ClueArgument(number=number, direction=direction)

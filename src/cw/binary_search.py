@@ -112,7 +112,7 @@ def binary_search(
             queue.push((middle, end))
 
         else:
-            raise Exception(f"{start} {end}: reached an impossible state")
+            raise RuntimeError(f"{start} {end}: reached an impossible state")
 
     logger.info(
         "Found %d missing days: %s", len(all_missing_days), sorted(all_missing_days)

@@ -90,7 +90,7 @@ def solve(clue: ClueArgument, solution: str):
     try:
         active = db.get_active_crossword()
         if active is None:
-            raise Exception("No active crossword. Start a crossword with `cw start`")
+            raise ValueError("No active crossword. Start a crossword with `cw start`")
 
         db.solve_clue(
             clue.direction, clue.number, active.style, active.number, solution
@@ -98,7 +98,7 @@ def solve(clue: ClueArgument, solution: str):
 
         print_current_crossword()
 
-    except Exception as ex:
+    except ValueError as ex:
         logger.error(ex)
         sys.exit(1)
 
@@ -114,7 +114,7 @@ def check():
     try:
         active = db.get_active_crossword()
         if active is None:
-            raise Exception("No active crossword. Start a crossword with `cw start`")
+            raise ValueError("No active crossword. Start a crossword with `cw start`")
 
         crossword = db.get_crossword(active.style, active.number)
         if crossword is None:
@@ -134,7 +134,7 @@ def check():
             logger.info("Puzzle is incomplete or has wrong answers")
             logger.info("Wrong letters are in red")
 
-    except Exception as ex:
+    except ValueError as ex:
         logger.error(ex)
         sys.exit(1)
 
