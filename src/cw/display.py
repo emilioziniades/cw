@@ -8,7 +8,6 @@ now been mushed into the logic for rendering the grid. ew ew ew.
 import os
 from dataclasses import dataclass
 from itertools import repeat
-from typing import Optional
 
 from rich import print
 from rich.columns import Columns
@@ -48,12 +47,12 @@ SUPERSCRIPTS = {
 
 @dataclass
 class Cell:
-    clue_number: Optional[int] = None
-    user_letter: Optional[str] = None
-    solution_letter: Optional[str] = None
+    clue_number: int | None = None
+    user_letter: str | None = None
+    solution_letter: str | None = None
     is_black_square: bool = True
 
-    def display(self, colour: Optional[str] = None):
+    def display(self, colour: str | None = None):
         def style(inner: str):
             if colour:
                 return f"[{colour}]{inner}[/{colour}]"
@@ -100,7 +99,7 @@ class Grid:
 
         solved = self.is_correct()
 
-        def get_colour(cell: Cell) -> Optional[str]:
+        def get_colour(cell: Cell) -> str | None:
             if check:
                 if solved:
                     return "green"
@@ -163,23 +162,19 @@ class Grid:
 
     def is_correct(self):
         return all(
-            [c.user_letter == c.solution_letter for cell in self.cells for c in cell]
+            c.user_letter == c.solution_letter for cell in self.cells for c in cell
         )
 
 
 def print_crossword(cw: Crossword, check: bool = False):
     grid = crossword_to_grid(cw)
 
-    acrosses = ["[b][u]Across[/b][/u]"] + list(
-        sorted(
-            [str(c) for c in cw.clues if c.direction is Direction.ACROSS],
-        )
+    acrosses = ["[b][u]Across[/b][/u]"] + sorted(
+        [str(c) for c in cw.clues if c.direction is Direction.ACROSS],
     )
 
-    downs = ["[b][u]Down[/b][/u]"] + list(
-        sorted(
-            [str(c) for c in cw.clues if c.direction is Direction.DOWN],
-        )
+    downs = ["[b][u]Down[/b][/u]"] + sorted(
+        [str(c) for c in cw.clues if c.direction is Direction.DOWN],
     )
 
     print(

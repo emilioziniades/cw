@@ -8,9 +8,9 @@ Module for storing all crossword data in a sqlite database
 
 import logging
 import sqlite3
+from collections.abc import Generator
 from contextlib import contextmanager
 from itertools import repeat
-from typing import Generator, Optional
 
 from cw.config import config
 from cw.crossword import Clue, Crossword, CrosswordStyle, Direction, Letter
@@ -187,7 +187,7 @@ def start_crossword(style: CrosswordStyle, number: int):
         logger.debug("Set %s #%s as active", style, number)
 
 
-def get_active_crossword() -> Optional[Crossword]:
+def get_active_crossword() -> Crossword | None:
     with database() as db:
         res = db.execute(
             "SELECT * FROM crossword WHERE user_state = 'active'"
@@ -208,7 +208,7 @@ def stop_crossword(style: CrosswordStyle, number: int):
         logger.debug("Set %s #%s as inactive", style, number)
 
 
-def get_crossword(style: CrosswordStyle, number: int) -> Optional[Crossword]:
+def get_crossword(style: CrosswordStyle, number: int) -> Crossword | None:
     with database() as db:
         res = db.execute(
             """
@@ -248,7 +248,7 @@ def get_clue(
     number: int,
     crossword_style: CrosswordStyle,
     crossword_number: int,
-) -> Optional[Clue]:
+) -> Clue | None:
     with database() as db:
         res = db.execute(
             """
@@ -385,4 +385,3 @@ def mark_completed(crossword: Crossword):
             """,
             (crossword.style, crossword.number),
         )
-    pass

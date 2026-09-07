@@ -9,7 +9,6 @@ Module for fetching crossword data from the Guardian website.
 import json
 import logging
 from datetime import date
-from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -23,7 +22,7 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://www.theguardian.com/crosswords"
 
 
-def fetch(style: CrosswordStyle, number: Optional[int]):
+def fetch(style: CrosswordStyle, number: int | None):
     if number is None:
         logger.info("No puzzle number specified, fetching today's puzzle")
         number = crossword_number_from_date(style, date.today())

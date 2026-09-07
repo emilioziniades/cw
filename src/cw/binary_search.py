@@ -7,8 +7,8 @@ The idea is to do a binary search with caching to avoid hammering the Guardian w
 
 import logging
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
-from typing import Generic, Optional, TypeVar
+from datetime import UTC, date, datetime
+from typing import TypeVar
 
 from cw.calendar import days_between, is_sunday
 from cw.crossword import CrosswordStyle
@@ -25,16 +25,18 @@ class Puzzle:
     date: date
 
 
-class Queue(Generic[T]):
+class Queue[T]:
     queue: list[T]
 
-    def __init__(self, items: list[T] = []):
+    def __init__(self, items: list[T] | None = None):
+        if items is None:
+            items = []
         self.queue = items
 
     def push(self, item: T):
         self.queue.append(item)
 
-    def pop(self) -> Optional[T]:
+    def pop(self) -> T | None:
         try:
             return self.queue.pop(0)
         except IndexError:
@@ -45,11 +47,13 @@ def binary_search(
     start: Puzzle,
     end: Puzzle,
     style: CrosswordStyle,
-    known_dates: dict[int, date] = {},
+    known_dates: dict[int, date] | None = None,
 ) -> tuple[list[date], list[date]]:
     """
     Performs a binary search for dates that should have crossword puzzles but do not
     """
+    if known_dates is None:
+        known_dates = {}
     queue: Queue[tuple[Puzzle, Puzzle]] = Queue()
     all_missing_days = []
     all_extra_days = []
@@ -100,7 +104,7 @@ def binary_search(
             else:
                 middle_crossword = fetch(style, middle_number)
                 middle_date = datetime.fromtimestamp(
-                    middle_crossword["date"] / 1000.0, tz=timezone.utc
+                    middle_crossword["date"] / 1000.0, tz=UTC
                 ).date()
 
             middle = Puzzle(middle_number, middle_date)

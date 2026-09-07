@@ -1,7 +1,6 @@
-from cw.parameters import ClueParamType, ClueArgument
 import logging
+import sys
 from datetime import date
-from typing import Optional
 
 import click
 
@@ -9,6 +8,7 @@ from cw import db, display
 from cw.crossword import Crossword, CrosswordStyle
 from cw.fetch import crossword_number_from_date
 from cw.fetch import fetch as cw_fetch
+from cw.parameters import ClueArgument, ClueParamType
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ def fetch(style: CrosswordStyle, number: int):
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
-def start(style: CrosswordStyle, number: Optional[int]):
+def start(style: CrosswordStyle, number: int | None):
     if number is None:
         number = crossword_number_from_date(style, date.today())
     db.start_crossword(style, number)
@@ -68,7 +68,7 @@ def start(style: CrosswordStyle, number: Optional[int]):
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
-def stop(style: CrosswordStyle, number: Optional[int]):
+def stop(style: CrosswordStyle, number: int | None):
     if number is None:
         number = crossword_number_from_date(style, date.today())
     db.stop_crossword(style, number)
@@ -100,7 +100,7 @@ def solve(clue: ClueArgument, solution: str):
 
     except Exception as ex:
         logger.error(ex)
-        exit(1)
+        sys.exit(1)
 
 
 @cli.command()
@@ -136,7 +136,7 @@ def check():
 
     except Exception as ex:
         logger.error(ex)
-        exit(1)
+        sys.exit(1)
 
 
 @cli.command()
@@ -156,7 +156,7 @@ def print_current_crossword():
         logger.fatal(
             "No active crossword. Use `cw start <style> <number>` to start a puzzle"
         )
-        exit(1)
+        sys.exit(1)
 
     crossword = db.get_crossword(active.style, active.number)
     if crossword is None:
