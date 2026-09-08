@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from itertools import repeat
 
 from cw.config import config
-from cw.crossword import Clue, Crossword, CrosswordStyle, Direction, Letter
+from cw.crossword import Clue, Crossword, CrosswordStyle, Direction, Letter, State
 
 logger = logging.getLogger(__name__)
 
@@ -371,7 +371,7 @@ def solve_clue(
             ys = range(clue.position_y, clue.position_y + length)
 
     for x, y, letter in zip(xs, ys, user_solution):
-        # this inserts in multiple transactions. it should be one
+        # TODO: this inserts in multiple transactions. it should be one
         add_letter(crossword_style, crossword_number, x, y, letter.upper())
 
 
@@ -383,5 +383,24 @@ def mark_completed(crossword: Crossword):
                 SET user_state = 'complete'
                 WHERE style = ? AND number = ?
             """,
+            (crossword.style, crossword.number),
+        )
+
+
+def clear_user_answers(crossword: Crossword):
+    crossword_db = get_crossword(crossword.style, crossword.number)
+    if crossword_db is None:
+        raise ValueError("Crossword does not exist in the database")
+
+    if crossword_db.user_state != State.ACTIVE:
+        raise ValueError("Only active crossword can be cleared")
+
+    with database() as db:
+        db.execute(
+            """
+            DELETE FROM user_input
+            WHERE crossword_style = ?
+            AND crossword_number = ?
+                """,
             (crossword.style, crossword.number),
         )

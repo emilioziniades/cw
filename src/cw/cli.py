@@ -6,6 +6,7 @@ import click
 from cw import db, display
 from cw.calendar import today
 from cw.crossword import Crossword, CrosswordStyle
+from cw.db import get_crossword
 from cw.fetch import crossword_number_from_date
 from cw.fetch import fetch as cw_fetch
 from cw.parameters import ClueArgument, ClueParamType
@@ -96,7 +97,18 @@ def solve(clue: ClueArgument, solution: str):
             clue.direction, clue.number, active.style, active.number, solution
         )
 
-        print_current_crossword()
+        crossword = get_crossword(active.style, active.number)
+        if crossword is None:
+            raise ValueError("The active crossword does not exist")
+
+        grid = display.crossword_to_grid(crossword)
+
+        if grid.is_correct():
+            print_current_crossword(reveal=True)
+            db.mark_completed(crossword)
+            logger.info("SUCCESS! Crossword has been marked as completed")
+        else:
+            print_current_crossword()
 
     except ValueError as ex:
         logger.error(ex)
@@ -110,7 +122,8 @@ def list():
 
 
 @cli.command()
-def check():
+@click.option("--reveal", is_flag=True)
+def check(reveal):
     try:
         active = db.get_active_crossword()
         if active is None:
@@ -120,19 +133,29 @@ def check():
         if crossword is None:
             raise ValueError("The active crossword does not exist")
 
-        # TODO: if crossword is green, mark it as completed and tell the user
-        display.print_crossword(crossword, check=True)
-
         grid = display.crossword_to_grid(crossword)
 
         # TODO: this is the second time we calculate is_correct. Obviously performance isn't
         # really an issue but it is a huge code smell that a class from `cw.display` has solving logic
         if grid.is_correct():
-            logger.info("SUCCESS! Crossword has been marked as completed")
+            display.print_crossword(crossword, reveal=True)
             db.mark_completed(crossword)
+            logger.info("SUCCESS! Crossword has been marked as completed")
+        elif grid.is_complete():
+            if reveal:
+                display.print_crossword(crossword, reveal=True)
+                logger.info(
+                    "Puzzle has wrong answers. Wrong letters are displayed in red"
+                )
+
+            else:
+                display.print_crossword(crossword)
+                logger.info(
+                    "Puzzle has wrong answers. Use `--reveal` flag to show wrong letters"
+                )
         else:
-            logger.info("Puzzle is incomplete or has wrong answers")
-            logger.info("Wrong letters are in red")
+            display.print_crossword(crossword)
+            logger.info("Puzzle is incomplete")
 
     except ValueError as ex:
         logger.error(ex)
@@ -140,17 +163,21 @@ def check():
 
 
 @cli.command()
-def reveal():
-    # TODO: fill in missing cells in blue and wrong cells in yellow
-    pass
-
-
-@cli.command()
 def clear():
-    pass
+    try:
+        active = db.get_active_crossword()
+        if active is None:
+            raise ValueError("No active crossword. Start a crossword with `cw start`")
+        db.clear_user_answers(active)
+
+        print_current_crossword()
+
+    except ValueError as ex:
+        logger.error(ex)
+        sys.exit(1)
 
 
-def print_current_crossword():
+def print_current_crossword(reveal: bool = False):
     active = db.get_active_crossword()
     if active is None:
         logger.fatal(
@@ -162,4 +189,4 @@ def print_current_crossword():
     if crossword is None:
         raise ValueError("The active crossword does not exist")
 
-    display.print_crossword(crossword)
+    display.print_crossword(crossword, reveal=reveal)

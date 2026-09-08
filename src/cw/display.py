@@ -13,6 +13,7 @@ from rich import print
 from rich.columns import Columns
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 from cw.crossword import Crossword, Direction, State
 from cw.db import get_letters
@@ -88,85 +89,78 @@ class Cell:
 class Grid:
     cells: list[list[Cell]]
 
-    # NOTE: assumes that (1) cell contents are one row high
-    # and (2) cell width is 4 characters wide
-    def display(self, check: bool = False):
-        CELL_WIDTH = 4
-        grid = ""
+    # TODO: include options for display mode, e.g. paper or terminal
+    def display(self, reveal: bool = False):
+        SEP = "\u258e"  # ▎ left one-quarter block
+        BODY = 4  # interior chars per cell (fits 2-digit numbers)
+        BLACK = "#000000"  # grid lines and letters
+        WHITE = "#ffffff"  # open cell background
+        NUM_FG = "#666666"  # clue numbers
 
-        n_rows = len(self.cells)
-        n_cols = len(self.cells[0])
+        def bg(cell: Cell) -> str:
+            return BLACK if cell.is_black_square else WHITE
 
-        solved = self.is_correct()
-
-        def get_colour(cell: Cell) -> str | None:
-            if check:
-                if solved:
-                    return "green"
-                elif cell.user_letter != cell.solution_letter:
-                    return "red"
+        def number_row(row: list[Cell]) -> Text:
+            text = Text()
+            for cell in row:
+                style = f"{BLACK} on {bg(cell)} overline"
+                text.append(SEP, style=style)
+                if cell.is_black_square:
+                    text.append(" " * BODY, style=style)
                 else:
-                    return None
-            else:
-                return None
+                    number = str(cell.clue_number) if cell.clue_number else ""
+                    text.append(
+                        number.ljust(BODY), style=f"{NUM_FG} on {bg(cell)} overline"
+                    )
+            text.append(SEP, style=BLACK)
+            return text
 
-        for r, row in enumerate(self.cells):
-            # TOP
-            for c, _ in enumerate(row):
-                if c == 0 and r == 0:
-                    grid += TL
-                elif c == 0:
-                    grid += CR
-                elif r == 0:
-                    grid += CD
-                elif r == 0 and c == 0:
-                    grid += BL
-                else:
-                    grid += CC
-
-                grid += H * CELL_WIDTH
-
-            if r == 0:
-                grid += TR
-            else:
-                grid += CL
-
-            grid += os.linesep
-
-            # MIDDLE
-            for c, col in enumerate(row):
-                grid += V
-                grid += col.display(colour=get_colour(col))
-
-                if c == n_cols - 1:
-                    grid += V
-
-            grid += os.linesep
-
-            # BOTTOM
-            # Since each row shares a top and bottom,
-            # we only have to print the bottom once
-            if r == n_rows - 1:
-                for c, _ in enumerate(row):
-                    if c == 0:
-                        grid += BL
+        def letter_row(row: list[Cell]) -> Text:
+            text = Text()
+            for cell in row:
+                style = f"{BLACK} on {bg(cell)}"
+                text.append(SEP, style=style)
+                body = (
+                    " " * BODY
+                    if cell.is_black_square
+                    else (cell.user_letter or " ".strip()).center(BODY)
+                )
+                letter_colour = BLACK
+                if reveal:
+                    if cell.user_letter == cell.solution_letter:
+                        letter_colour = "green"
                     else:
-                        grid += CU
+                        letter_colour = "red"
 
-                    grid += H * CELL_WIDTH
+                style = f"{letter_colour} on {bg(cell)}"
+                text.append(body, style=f"bold {style}")
+            text.append(SEP, style=BLACK)
+            return text
 
-                    if c == n_cols - 1:
-                        grid += BR
+        width = len(self.cells[0]) * (BODY + 1) + 1
+        rows = []
+        for row in self.cells:
+            rows.append(number_row(row))
+            rows.append(letter_row(row))
+        rows.append(Text(" " * (width - 1), style=f"{BLACK} overline"))
 
-        return grid
+        return Text(os.linesep).join(rows)
 
-    def is_correct(self):
+    def is_correct(self) -> bool:
         return all(
             c.user_letter == c.solution_letter for cell in self.cells for c in cell
         )
 
+    def is_complete(self) -> bool:
+        return all(
+            c.user_letter is not None
+            for cell in self.cells
+            for c in cell
+            if not c.is_black_square
+        )
 
-def print_crossword(cw: Crossword, check: bool = False):
+
+def print_crossword(cw: Crossword, reveal: bool = False):
     grid = crossword_to_grid(cw)
 
     acrosses = ["[b][u]Across[/b][/u]"] + sorted(
@@ -180,7 +174,7 @@ def print_crossword(cw: Crossword, check: bool = False):
     print(
         Columns(
             [
-                grid.display(check=check),
+                grid.display(reveal=reveal),
                 os.linesep.join(acrosses),
                 os.linesep.join(downs),
             ],
