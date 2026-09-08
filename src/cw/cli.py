@@ -5,6 +5,7 @@ import click
 
 from cw import db, display
 from cw.calendar import today
+from cw.config import OutputStyle, config
 from cw.crossword import Crossword, CrosswordStyle
 from cw.db import get_crossword
 from cw.fetch import crossword_number_from_date
@@ -175,6 +176,20 @@ def clear():
     except ValueError as ex:
         logger.error(ex)
         sys.exit(1)
+
+
+@cli.command()
+@click.option(
+    "--display",
+    type=click.Choice(OutputStyle, case_sensitive=False),
+    help="Display style for crossword and clues",
+)
+def configure(display: OutputStyle | None):
+    user_config = config.user_config
+
+    if display is not None:
+        user_config.display = display
+        user_config.save()
 
 
 def print_current_crossword(reveal: bool = False):
