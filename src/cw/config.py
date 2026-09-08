@@ -21,7 +21,7 @@ class OutputStyle(StrEnum):
 @dataclass
 class UserConfig:
     _path: Path
-    display: OutputStyle = OutputStyle.PRETTY
+    output: OutputStyle = OutputStyle.PRETTY
 
     def __init__(self, path: Path):
         super().__init__()
@@ -29,8 +29,8 @@ class UserConfig:
 
         config = self._load_config()
 
-        display = config.get("display")
-        self.display = OutputStyle(display) if display else OutputStyle.default()
+        output = config.get("output")
+        self.output = OutputStyle(output) if output else OutputStyle.default()
 
     def _load_config(self) -> dict:
         try:
@@ -53,7 +53,7 @@ class UserConfig:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._path.touch(exist_ok=True)
 
-        config = {"display": self.display}
+        config = {"output": self.output}
         config_raw = json.dumps(config)
 
         self._path.write_text(config_raw)
