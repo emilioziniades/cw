@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option("-v", "--verbose", is_flag=True)
+@click.version_option()
 def cli(verbose: bool):
     if verbose:
         logging.basicConfig(
