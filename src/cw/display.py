@@ -40,8 +40,7 @@ def print_crossword(cw: Crossword, reveal: bool = False):
         Columns(
             [
                 grid.display(reveal=reveal, output=output_style),
-                os.linesep.join(acrosses),
-                os.linesep.join(downs),
+                os.linesep.join(acrosses + [""] + downs),
             ],
             padding=(1, 3),
         )
