@@ -180,15 +180,15 @@ def clear():
 
 @cli.command()
 @click.option(
-    "--display",
+    "--output",
     type=click.Choice(OutputStyle, case_sensitive=False),
-    help="Display style for crossword and clues",
+    help="Output style for crossword and clues",
 )
-def configure(display: OutputStyle | None):
+def configure(output: OutputStyle | None):
     user_config = config.user_config
 
-    if display is not None:
-        user_config.display = display
+    if output is not None:
+        user_config.output = output
         user_config.save()
 
 
