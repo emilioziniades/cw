@@ -1,7 +1,6 @@
 import sqlite3
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import assert_never
 
 
 class CrosswordStyle(StrEnum):
@@ -116,8 +115,6 @@ class Crossword:
             elif clue.direction is Direction.DOWN:
                 end_x = start_x
                 end_y = start_y + length - 1
-            else:
-                assert_never(clue.direction)
 
             if not (0 <= start_x <= end_x <= max_x and 0 <= start_y <= end_y <= max_y):
                 raise ValueError(

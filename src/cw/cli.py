@@ -10,6 +10,7 @@ from cw.crossword import Crossword, CrosswordStyle
 from cw.db import get_crossword
 from cw.fetch import crossword_number_from_date
 from cw.fetch import fetch as cw_fetch
+from cw.grid import Grid
 from cw.parameters import ClueArgument, ClueParamType
 
 logger = logging.getLogger(__name__)
@@ -103,7 +104,7 @@ def solve(clue: ClueArgument, solution: str):
         if crossword is None:
             raise ValueError("The active crossword does not exist")
 
-        grid = display.crossword_to_grid(crossword)
+        grid = Grid.from_crossword(crossword)
 
         if grid.is_correct():
             print_current_crossword(reveal=True)
@@ -135,7 +136,7 @@ def check(reveal):
         if crossword is None:
             raise ValueError("The active crossword does not exist")
 
-        grid = display.crossword_to_grid(crossword)
+        grid = Grid.from_crossword(crossword)
 
         # TODO: this is the second time we calculate is_correct. Obviously performance isn't
         # really an issue but it is a huge code smell that a class from `cw.display` has solving logic
@@ -156,8 +157,10 @@ def check(reveal):
                     "Puzzle has wrong answers. Use `--reveal` flag to show wrong letters"
                 )
         else:
-            display.print_crossword(crossword)
-            logger.info("Puzzle is incomplete")
+            display.print_crossword(crossword, reveal=reveal)
+            logger.info(
+                f"Puzzle is incomplete{'. Wrong letters are displayed in red' if reveal else ''}"
+            )
 
     except ValueError as ex:
         logger.error(ex)
@@ -185,6 +188,7 @@ def clear():
     type=click.Choice(OutputStyle, case_sensitive=False),
     help="Output style for crossword and clues",
 )
+# TODO: add clear config for clearing the screen between prompts
 def configure(output: OutputStyle | None):
     user_config = config.user_config
 
