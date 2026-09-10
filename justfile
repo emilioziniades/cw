@@ -27,7 +27,6 @@ version v:
     test -z "$(git status --porcelain)"
     test "$(git branch --show-current)" = "main"
     uv version "{{ v }}"
-    git add uv.lock pyproject.toml
-    git commit -m "release {{ v }}"
+    git commit -a -m "release {{ v }}"
     git push
     git push --tags
