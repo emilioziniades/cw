@@ -1,3 +1,5 @@
+name: Release
+
 on:
   push:
     tags:
@@ -21,6 +23,3 @@ jobs:
         run: gh release create "$GITHUB_REF_NAME" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
-
-
-
