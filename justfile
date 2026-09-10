@@ -29,4 +29,5 @@ version v:
     uv version "{{ v }}"
     git add uv.lock pyproject.toml
     git commit -m "release {{ v }}"
+    git push
     git push --tags
