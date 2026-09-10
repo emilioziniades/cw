@@ -1,0 +1,25 @@
+on:
+  push:
+    tags:
+      - "0.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Verify pyproject.toml and tag versions match
+        run: test "$GITHUB_REF_NAME" = "$(uv version --short)"
+
+      - name: Create release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+
+
