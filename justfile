@@ -28,5 +28,6 @@ version v:
     test "$(git branch --show-current)" = "main"
     uv version "{{ v }}"
     git commit -a -m "release {{ v }}"
+    git tag "{{ v }}"
     git push
     git push --tags
