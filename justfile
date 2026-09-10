@@ -22,3 +22,11 @@ clean-cache:
 
 db-shell cmd="":
     nix run nixpkgs#sqlite {{ data_dir }}/cw.sqlite "{{ cmd }}"
+
+version v:
+    test -z "$(git status --porcelain)"
+    test "$(git branch --show-current)" = "main"
+    uv version "{{ v }}"
+    git add uv.lock pyproject.toml
+    git commit -m "release {{ v }}"
+    git push --tags
