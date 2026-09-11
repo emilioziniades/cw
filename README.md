@@ -63,7 +63,6 @@ cw configure --output plain
 
 ## LLM Usage Disclaimer
 
-I actually did not use an LLM to write this project.
 I tried to use LLMs as little as possible to create this tool.
 Whilst I did use LLMs in a chat interface as a sort of Google replacement, I intentionally did not use a terminal coding agent like Codex.
 One of the motivations for this project was to create something by hand.
