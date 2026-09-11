@@ -21,7 +21,7 @@ clean-cache:
     rm -rf {{ cache_dir }}
 
 db-shell cmd="":
-    nix run nixpkgs#sqlite {{ data_dir }}/cw.sqlite "{{ cmd }}"
+    sqlite3 {{ data_dir }}/cw.sqlite "{{ cmd }}"
 
 version v:
     test -z "$(git status --porcelain)"
