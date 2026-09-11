@@ -1,9 +1,6 @@
 """
 Module for representing the crossword as a grid.
 Acts as the sort of glue between the `crossword` table and the `user_input` table
-
-TODO: this is getting a bit weird, because the logic for checking correctness has
-now been mushed into the logic for rendering the grid. ew ew ew.
 """
 
 import os
@@ -70,7 +67,6 @@ class Grid:
 
         return cls(grid)
 
-    # TODO: include options for display mode, e.g. paper or terminal
     def display(self, output: OutputStyle, reveal: bool = False) -> Text:
 
         LEFT_ONE_QUARTER = "\u258e"  # ▎

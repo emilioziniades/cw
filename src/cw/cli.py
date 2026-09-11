@@ -139,7 +139,7 @@ def check(reveal):
         grid = Grid.from_crossword(crossword)
 
         # TODO: this is the second time we calculate is_correct. Obviously performance isn't
-        # really an issue but it is a huge code smell that a class from `cw.display` has solving logic
+        # really an issue but it is a huge code smell.
         if grid.is_correct():
             display.print_crossword(crossword, reveal=True)
             db.mark_completed(crossword)
@@ -188,13 +188,14 @@ def clear():
     type=click.Choice(OutputStyle, case_sensitive=False),
     help="Output style for crossword and clues",
 )
-# TODO: add clear config for clearing the screen between prompts
 def configure(output: OutputStyle | None):
     user_config = config.user_config
 
     if output is not None:
         user_config.output = output
         user_config.save()
+
+    logger.info("Configuration saved")
 
 
 def print_current_crossword(reveal: bool = False):
