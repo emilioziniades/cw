@@ -72,7 +72,7 @@ def print_crossword_list(cws: list[Crossword]):
 
     for cw in sorted(cws, key=sort_fn):
         table.add_row(
-            f"{cw.style.capitalize()} #{cw.number}",
+            f"{cw.style.capitalize():7} #{cw.number}",
             cw.user_state.capitalize(),
             style=style_for(cw),
         )
