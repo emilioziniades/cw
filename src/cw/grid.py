@@ -154,6 +154,14 @@ class Grid:
             c.user_letter == c.solution_letter for cell in self.cells for c in cell
         )
 
+    def is_correct_so_far(self) -> bool:
+        return all(
+            c.user_letter == c.solution_letter
+            for cell in self.cells
+            for c in cell
+            if not c.is_black_square and c.user_letter
+        )
+
     def is_complete(self) -> bool:
         return all(
             c.user_letter is not None

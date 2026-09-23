@@ -158,9 +158,15 @@ def check(reveal):
                 )
         else:
             display.print_crossword(crossword, reveal=reveal)
-            logger.info(
-                f"Puzzle is incomplete{'. Wrong letters are displayed in red' if reveal else ''}"
-            )
+            if reveal:
+                if grid.is_correct_so_far():
+                    logger.info("So far so good")
+                else:
+                    logger.info(
+                        "Puzzle is incomplete. Wrong letters are displayed in red"
+                    )
+            else:
+                logger.info("Puzzle is incomplete")
 
     except ValueError as ex:
         logger.error(ex)
