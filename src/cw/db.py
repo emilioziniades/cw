@@ -81,7 +81,7 @@ def migrate():
             crossword_number INTEGER NOT NULL,
             position_x INTEGER NOT NULL,
             position_y INTEGER NOT NULL,
-            letter TEXT NOT NULL CHECK(length(letter) = 1 AND letter = UPPER(letter)),
+            letter TEXT NOT NULL CHECK(length(letter) = 1 AND letter = UPPER(letter) AND letter = TRIM(letter)),
             PRIMARY KEY (position_x, position_y, crossword_style, crossword_number),
             FOREIGN KEY (crossword_style, crossword_number) REFERENCES crossword (style, number)
         );

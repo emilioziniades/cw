@@ -159,7 +159,7 @@ class Grid:
             c.user_letter == c.solution_letter
             for cell in self.cells
             for c in cell
-            if not c.is_black_square and c.user_letter
+            if not c.is_black_square and c.user_letter and c.user_letter.strip()
         )
 
     def is_complete(self) -> bool:
