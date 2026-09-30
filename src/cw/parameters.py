@@ -19,7 +19,7 @@ class ClueParamType(click.ParamType):
     `"""
 
     def convert(self, value, param, ctx):
-        match = re.match("^(\\d*)([a-zA-Z]*)$", value)
+        match = re.match("^(\\d+)([aAdD])$", value)
         if match is None:
             self.fail(
                 f"Failed to parse {value} as clue number + direction. Expected 1d or 22a"
