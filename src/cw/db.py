@@ -4,12 +4,14 @@ Module for storing all crossword data in a sqlite database
 - stores crossword JSON into a sqlite database
 
 #TODO: alot of functions with many parameters where we could just pass the Crossword/Clue object
+#TODO: a lot of functions which use the database() context, where they should just accept a db as an argument
 """
 
 import logging
 import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
+from sqlite3 import Connection
 
 from cw.config import config
 from cw.crossword import Clue, Crossword, CrosswordStyle, Direction, Letter, State
@@ -268,31 +270,31 @@ def get_clue(
 
 
 def add_letter(
+    db: Connection,
     crossword_style: CrosswordStyle,
     crossword_number: int,
     position_x: int,
     position_y: int,
     letter: str,
 ):
-    with database() as db:
-        db.execute(
-            """
-            INSERT INTO user_input
-            (crossword_style, crossword_number, position_x, position_y, letter)
-            VALUES
-            (:crossword_style, :crossword_number, :position_x, :position_y, :letter)
-            ON CONFLICT
-            DO UPDATE
-            SET letter = :letter;
-            """,
-            {
-                "crossword_style": crossword_style,
-                "crossword_number": crossword_number,
-                "position_x": position_x,
-                "position_y": position_y,
-                "letter": letter,
-            },
-        )
+    db.execute(
+        """
+        INSERT INTO user_input
+        (crossword_style, crossword_number, position_x, position_y, letter)
+        VALUES
+        (:crossword_style, :crossword_number, :position_x, :position_y, :letter)
+        ON CONFLICT
+        DO UPDATE
+        SET letter = :letter;
+        """,
+        {
+            "crossword_style": crossword_style,
+            "crossword_number": crossword_number,
+            "position_x": position_x,
+            "position_y": position_y,
+            "letter": letter,
+        },
+    )
 
 
 def get_letter(
@@ -343,6 +345,30 @@ def get_letters(
         return [Letter.from_row(row) for row in res]
 
 
+def delete_letter(
+    db: Connection,
+    crossword_style: CrosswordStyle,
+    crossword_number: int,
+    position_x: int,
+    position_y: int,
+):
+    db.execute(
+        """
+        DELETE FROM user_input
+        WHERE crossword_style = :crossword_style
+        AND crossword_number = :crossword_number
+        AND position_x = :position_x
+        AND position_y = :position_y
+        """,
+        {
+            "crossword_style": crossword_style,
+            "crossword_number": crossword_number,
+            "position_x": position_x,
+            "position_y": position_y,
+        },
+    )
+
+
 def solve_clue(
     direction: Direction,
     number: int,
@@ -361,18 +387,35 @@ def solve_clue(
     if len(user_solution) != length:
         raise ValueError(f"'{user_solution}' should be {length} characters")
 
-    for (x, y), letter in zip(clue.coordinates(), user_solution):
-        # TODO: this inserts in multiple transactions. it should be one
-        add_letter(crossword_style, crossword_number, x, y, letter.upper())
+    with database() as db:
+        for (x, y), letter in zip(clue.coordinates(), user_solution):
+            add_letter(db, crossword_style, crossword_number, x, y, letter.upper())
+
+
+def clear_clue(
+    crossword: Crossword,
+    number: int,
+    direction: Direction,
+):
+    clue = get_clue(direction, number, crossword.style, crossword.number)
+    if clue is None:
+        raise ValueError(
+            f"Clue {number}{direction[0]} does not exist on {crossword.style} #{crossword.number}"
+        )
+
+    with database() as db:
+        # TODO: this deletes letters solved as part of a cross clue too
+        for x, y in clue.coordinates():
+            delete_letter(db, crossword.style, crossword.number, x, y)
 
 
 def mark_completed(crossword: Crossword):
     with database() as db:
         db.execute(
             """
-                UPDATE crossword
-                SET user_state = 'complete'
-                WHERE style = ? AND number = ?
+            UPDATE crossword
+            SET user_state = 'complete'
+            WHERE style = ? AND number = ?
             """,
             (crossword.style, crossword.number),
         )
@@ -392,6 +435,6 @@ def clear_user_answers(crossword: Crossword):
             DELETE FROM user_input
             WHERE crossword_style = ?
             AND crossword_number = ?
-                """,
+            """,
             (crossword.style, crossword.number),
         )

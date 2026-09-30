@@ -174,12 +174,17 @@ def check(reveal):
 
 
 @cli.command()
-def clear():
+@click.argument("clue", type=ClueParamType(), required=False)
+def clear(clue: ClueArgument | None):
     try:
         active = db.get_active_crossword()
         if active is None:
             raise ValueError("No active crossword. Start a crossword with `cw start`")
-        db.clear_user_answers(active)
+
+        if clue is not None:
+            db.clear_clue(active, clue.number, clue.direction)
+        else:
+            db.clear_user_answers(active)
 
         print_current_crossword()
 
