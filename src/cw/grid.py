@@ -11,7 +11,7 @@ from typing import Self
 from rich.text import Text
 
 from cw.config import OutputStyle
-from cw.crossword import Crossword, Direction
+from cw.crossword import Crossword, Direction, Clue
 from cw.db import get_letters
 
 
@@ -54,11 +54,11 @@ class Grid:
 
             match clue.direction:
                 case Direction.ACROSS:
-                    xs = range(clue.position_x + 1, clue.position_x + length)
+                    xs = range(x0 + 1, x0 + length)
                     ys = repeat(y0, length - 1)
                 case Direction.DOWN:
                     xs = repeat(x0, length - 1)
-                    ys = range(clue.position_y + 1, clue.position_y + length)
+                    ys = range(y0 + 1, y0 + length)
 
             for x, y, letter in zip(xs, ys, clue.solution[1:]):
                 grid[y][x].is_black_square = False
@@ -122,7 +122,7 @@ class Grid:
                 body = (
                     " " * BODY_WIDTH
                     if cell.is_black_square
-                    else (cell.user_letter or " ".strip()).center(BODY_WIDTH)
+                    else (cell.user_letter or "").center(BODY_WIDTH)
                 )
 
                 letter_colour = text_colour
@@ -159,8 +159,23 @@ class Grid:
             c.user_letter == c.solution_letter
             for cell in self.cells
             for c in cell
-            if not c.is_black_square and c.user_letter and c.user_letter.strip()
+            if not c.is_black_square and c.user_letter
         )
+
+    def is_clue_complete(self, clue: Clue) -> bool:
+        length = len(clue.solution)
+        x0 = clue.position_x
+        y0 = clue.position_y
+
+        match clue.direction:
+            case Direction.ACROSS:
+                xs = range(x0, x0 + length)
+                ys = repeat(y0, length)
+            case Direction.DOWN:
+                xs = repeat(x0, length)
+                ys = range(y0, y0 + length)
+
+        return all(self.cells[y][x].user_letter for (x, y) in zip(xs, ys))
 
     def is_complete(self) -> bool:
         return all(

@@ -2,6 +2,8 @@
 Module for displaying data in terminal
 """
 
+from rich.text import Text
+
 import os
 from dataclasses import dataclass
 
@@ -28,19 +30,23 @@ def print_crossword(cw: Crossword, reveal: bool = False):
 
     output_style = config.user_config.output
 
-    acrosses = ["[b][u]Across[/b][/u]"] + sorted(
-        [str(c) for c in cw.clues if c.direction is Direction.ACROSS],
-    )
+    acrosses = [Text("Across", style="bold underline")] + [
+        Text(str(c), style="dim strike" if grid.is_clue_complete(c) else "")
+        for c in sorted(cw.clues, key=lambda c: c.number)
+        if c.direction is Direction.ACROSS
+    ]
 
-    downs = ["[b][u]Down[/b][/u]"] + sorted(
-        [str(c) for c in cw.clues if c.direction is Direction.DOWN],
-    )
+    downs = [Text("Down", style="bold underline")] + [
+        Text(str(c), style="dim strike" if grid.is_clue_complete(c) else "")
+        for c in sorted(cw.clues, key=lambda c: c.number)
+        if c.direction is Direction.DOWN
+    ]
 
     print(
         Columns(
             [
                 grid.display(reveal=reveal, output=output_style),
-                os.linesep.join(acrosses + [""] + downs),
+                Text(os.linesep).join(acrosses + [Text("")] + downs),
             ],
             padding=(1, 3),
         )
