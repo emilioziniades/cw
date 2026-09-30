@@ -188,14 +188,6 @@ def start_crossword(style: CrosswordStyle, number: int):
         logger.debug("Set %s #%s as active", style, number)
 
 
-def get_active_crossword() -> Crossword | None:
-    with database() as db:
-        res = db.execute(
-            "SELECT * FROM crossword WHERE user_state = 'active'"
-        ).fetchone()
-        return Crossword.from_row(res, []) if res else None
-
-
 def stop_crossword(style: CrosswordStyle, number: int):
     with database() as db:
         db.execute(
@@ -207,6 +199,14 @@ def stop_crossword(style: CrosswordStyle, number: int):
             (style, number),
         )
         logger.debug("Set %s #%s as inactive", style, number)
+
+
+def get_active_crossword() -> Crossword | None:
+    with database() as db:
+        res = db.execute(
+            "SELECT * FROM crossword WHERE user_state = 'active'"
+        ).fetchone()
+        return get_crossword(res["style"], res["number"]) if res else None
 
 
 def get_crossword(style: CrosswordStyle, number: int) -> Crossword | None:
