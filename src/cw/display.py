@@ -2,8 +2,6 @@
 Module for displaying data in terminal
 """
 
-from rich.text import Text
-
 import os
 from dataclasses import dataclass
 
@@ -11,6 +9,7 @@ from rich import print
 from rich.columns import Columns
 from rich.console import Console
 from rich.table import Table
+from rich.text import Text
 
 from cw.config import config
 from cw.crossword import Crossword, Direction, State
