@@ -1,6 +1,7 @@
 import sqlite3
 from dataclasses import dataclass
 from enum import StrEnum, auto
+from itertools import repeat
 
 
 class CrosswordStyle(StrEnum):
@@ -60,6 +61,21 @@ class Clue:
             .replace("</i>", "[/italic]")
         )
         return f"{self.number:>2}. {clue}"
+
+    def coordinates(self) -> list[tuple[int, int]]:
+        length = len(self.solution)
+        x0 = self.position_x
+        y0 = self.position_y
+
+        match self.direction:
+            case Direction.ACROSS:
+                xs = range(x0, x0 + length)
+                ys = repeat(y0, length)
+            case Direction.DOWN:
+                xs = repeat(x0, length)
+                ys = range(y0, y0 + length)
+
+        return list(zip(xs, ys))
 
 
 @dataclass(frozen=True)

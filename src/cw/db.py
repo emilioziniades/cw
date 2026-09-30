@@ -10,7 +10,6 @@ import logging
 import sqlite3
 from collections.abc import Generator
 from contextlib import contextmanager
-from itertools import repeat
 
 from cw.config import config
 from cw.crossword import Clue, Crossword, CrosswordStyle, Direction, Letter, State
@@ -362,15 +361,7 @@ def solve_clue(
     if len(user_solution) != length:
         raise ValueError(f"'{user_solution}' should be {length} characters")
 
-    match clue.direction:
-        case Direction.ACROSS:
-            xs = range(clue.position_x, clue.position_x + length)
-            ys = repeat(clue.position_y, length)
-        case Direction.DOWN:
-            xs = repeat(clue.position_x, length)
-            ys = range(clue.position_y, clue.position_y + length)
-
-    for x, y, letter in zip(xs, ys, user_solution):
+    for (x, y), letter in zip(clue.coordinates(), user_solution):
         # TODO: this inserts in multiple transactions. it should be one
         add_letter(crossword_style, crossword_number, x, y, letter.upper())
 

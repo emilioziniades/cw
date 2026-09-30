@@ -5,13 +5,12 @@ Acts as the sort of glue between the `crossword` table and the `user_input` tabl
 
 import os
 from dataclasses import dataclass
-from itertools import repeat
 from typing import Self
 
 from rich.text import Text
 
 from cw.config import OutputStyle
-from cw.crossword import Crossword, Direction, Clue
+from cw.crossword import Clue, Crossword
 from cw.db import get_letters
 
 
@@ -42,8 +41,6 @@ class Grid:
 
         # paint white cells, letters and numbers
         for clue in cw.clues:
-            length = len(clue.solution)
-
             x0 = clue.position_x
             y0 = clue.position_y
 
@@ -52,15 +49,7 @@ class Grid:
             grid[y0][x0].user_letter = user_letters.get((x0, y0))
             grid[y0][x0].solution_letter = clue.solution[0]
 
-            match clue.direction:
-                case Direction.ACROSS:
-                    xs = range(x0 + 1, x0 + length)
-                    ys = repeat(y0, length - 1)
-                case Direction.DOWN:
-                    xs = repeat(x0, length - 1)
-                    ys = range(y0 + 1, y0 + length)
-
-            for x, y, letter in zip(xs, ys, clue.solution[1:]):
+            for (x, y), letter in zip(clue.coordinates()[1:], clue.solution[1:]):
                 grid[y][x].is_black_square = False
                 grid[y][x].user_letter = user_letters.get((x, y))
                 grid[y][x].solution_letter = letter
@@ -163,19 +152,7 @@ class Grid:
         )
 
     def is_clue_complete(self, clue: Clue) -> bool:
-        length = len(clue.solution)
-        x0 = clue.position_x
-        y0 = clue.position_y
-
-        match clue.direction:
-            case Direction.ACROSS:
-                xs = range(x0, x0 + length)
-                ys = repeat(y0, length)
-            case Direction.DOWN:
-                xs = repeat(x0, length)
-                ys = range(y0, y0 + length)
-
-        return all(self.cells[y][x].user_letter for (x, y) in zip(xs, ys))
+        return all(self.cells[y][x].user_letter for (x, y) in clue.coordinates())
 
     def is_complete(self) -> bool:
         return all(
