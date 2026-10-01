@@ -1,24 +1,32 @@
+from calendar import Day
 from collections.abc import Iterator
 from datetime import UTC, date, datetime, timedelta
 
 
-def n_sundays_between(start_date: date, end_date: date) -> int:
-    if is_sunday(start_date):
-        raise ValueError(f"start date {start_date} cannot be Sunday")
+def n_days_between(day: Day, start: date, end: date) -> int:
+    if start > end:
+        raise ValueError(f"start date {start} occurs after end date {end}")
 
-    if is_sunday(end_date):
-        raise ValueError(f"end date {end_date} cannot be Sunday")
+    days_until_next = (day - start.weekday()) % 7
+    first_day = start + timedelta(days=days_until_next)
 
-    if start_date > end_date:
-        raise ValueError(f"start date {start_date} occurs after end date {end_date}")
+    if first_day > end:
+        return 0
 
-    days = (end_date - start_date).days
-    n_sundays = days // 7
+    return (end - first_day).days // 7 + 1
 
-    if (days % 7 + start_date.isoweekday()) >= 7:
-        n_sundays += 1
 
-    return n_sundays
+def n_days_between_slow(day: Day, start: date, end: date) -> int:
+    current = start
+    count = 0
+
+    while current <= end:
+        if current.weekday() == day:
+            count += 1
+
+        current += timedelta(days=1)
+
+    return count
 
 
 # This is open interval that does not include the start or end date
@@ -27,10 +35,6 @@ def days_between(start: date, end: date) -> Iterator[date]:
     while current < end:
         yield current
         current += timedelta(days=1)
-
-
-def is_sunday(d: date) -> bool:
-    return d.isoweekday() == 7
 
 
 def today() -> date:

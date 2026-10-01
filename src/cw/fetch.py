@@ -8,12 +8,13 @@ Module for fetching crossword data from the Guardian website.
 
 import json
 import logging
+from calendar import FRIDAY, MONDAY, SATURDAY, SUNDAY, THURSDAY, TUESDAY, WEDNESDAY
 from datetime import date
 
 import requests
 from bs4 import BeautifulSoup
 
-from cw.calendar import n_sundays_between, today
+from cw.calendar import n_days_between, today
 from cw.config import config
 from cw.crossword import CrosswordStyle
 
@@ -25,7 +26,7 @@ BASE_URL = "https://www.theguardian.com/crosswords"
 def fetch(style: CrosswordStyle, number: int | None):
     if number is None:
         logger.info("No puzzle number specified, fetching today's puzzle")
-        number = crossword_number_from_date(style, today())
+        number = latest_crossword_number(style, today())
     logger.info("Fetching %s crossword #%s", style, number)
 
     cached_file = config.cache_dir / "crosswords" / style / f"{number}.html"
@@ -78,7 +79,7 @@ def puzzle_json_from_html(html: str) -> dict:
     return data
 
 
-def crossword_number_from_date(style: CrosswordStyle, d: date) -> int:
+def latest_crossword_number(style: CrosswordStyle, d: date) -> int:
     MINI_START_DATE = date(2025, 12, 17)
 
     QUICK_START_DATE = date(2002, 5, 23)
@@ -153,26 +154,40 @@ def crossword_number_from_date(style: CrosswordStyle, d: date) -> int:
         date(2009, 7, 20),
     ]
 
+    QUICKCRYPTIC_START_DATE = date(2024, 4, 6)
+    QUICKCRYPTIC_START_NUMBER = 1
+
+    def dates_lte(d: date, ds: list[date]) -> int:
+        return len([i for i in ds if d >= i])
+
+    # Mini crosswords are released every day
     if style is CrosswordStyle.MINI:
         duration = d - MINI_START_DATE
         return duration.days
+
+    # Quick crosswords are not published on a Sunday
     elif style is CrosswordStyle.QUICK:
         duration = d - QUICK_START_DATE
-        days_missing_puzzles = [i for i in QUICK_DATES_MISSING_PUZZLES if d >= i]
         return (
             duration.days
             + QUICK_START_NUMBER
-            - n_sundays_between(QUICK_START_DATE, d)
-            - len(days_missing_puzzles)
+            - n_days_between(SUNDAY, QUICK_START_DATE, d)
+            - dates_lte(d, QUICK_DATES_MISSING_PUZZLES)
         )
+
+    # Cryptic crosswords are not published on a Sunday
     elif style is CrosswordStyle.CRYPTIC:
         duration = d - CRYPTIC_START_DATE
-        days_missing_puzzles = [i for i in CRYPTIC_DATES_MISSING_PUZZLES if d >= i]
-        days_extra_puzzle = [i for i in CRYPTIC_DATES_EXTRA_PUZZLE if d >= i]
         return (
             duration.days
             + CRYPTIC_START_NUMBER
-            - n_sundays_between(CRYPTIC_START_DATE, d)
-            - len(days_missing_puzzles)
-            + len(days_extra_puzzle)
+            - n_days_between(SUNDAY, CRYPTIC_START_DATE, d)
+            - dates_lte(d, CRYPTIC_DATES_MISSING_PUZZLES)
+            + dates_lte(d, CRYPTIC_DATES_EXTRA_PUZZLE)
+        )
+
+    # Quick Cryptic crosswords are  only published on a Sunday
+    elif style is CrosswordStyle.QUICKCRYPTIC:
+        return QUICKCRYPTIC_START_NUMBER + n_days_between(
+            SUNDAY, QUICKCRYPTIC_START_DATE, d
         )

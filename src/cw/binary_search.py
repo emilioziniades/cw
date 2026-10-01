@@ -6,13 +6,14 @@ The idea is to do a binary search with caching to avoid hammering the Guardian w
 """
 
 import logging
+from calendar import SUNDAY
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import TypeVar
 
-from cw.calendar import days_between, is_sunday
+from cw.calendar import days_between, is_sunday, n_days_between
 from cw.crossword import CrosswordStyle
-from cw.fetch import fetch, n_sundays_between
+from cw.fetch import fetch
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ def binary_search(
         expected_end_number = (
             start.number
             + (end.date - start.date).days
-            - n_sundays_between(start.date, end.date)
+            - n_days_between(SUNDAY, start.date, end.date)
         )
 
         if expected_end_number == end.number:

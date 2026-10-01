@@ -8,7 +8,7 @@ from cw.calendar import today
 from cw.config import OutputStyle, config
 from cw.crossword import Crossword, CrosswordStyle
 from cw.db import get_crossword
-from cw.fetch import crossword_number_from_date
+from cw.fetch import latest_crossword_number
 from cw.fetch import fetch as cw_fetch
 from cw.grid import Grid
 from cw.parameters import ClueArgument, ClueParamType
@@ -44,7 +44,7 @@ def cli(verbose: bool):
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
-def fetch(style: CrosswordStyle, number: int):
+def fetch(style: CrosswordStyle, number: int | None):
     crossword_json = cw_fetch(style, number)
     crossword = Crossword.from_json(crossword_json)
     if not db.has_crossword(crossword):
@@ -60,7 +60,7 @@ def fetch(style: CrosswordStyle, number: int):
 @click.argument("number", type=int, default=None)
 def start(style: CrosswordStyle, number: int | None):
     if number is None:
-        number = crossword_number_from_date(style, today())
+        number = latest_crossword_number(style, today())
     db.start_crossword(style, number)
     print_current_crossword()
 
@@ -74,7 +74,7 @@ def start(style: CrosswordStyle, number: int | None):
 @click.argument("number", type=int, default=None)
 def stop(style: CrosswordStyle, number: int | None):
     if number is None:
-        number = crossword_number_from_date(style, today())
+        number = latest_crossword_number(style, today())
     db.stop_crossword(style, number)
 
 

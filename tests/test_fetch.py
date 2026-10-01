@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 
 from cw.crossword import CrosswordStyle
-from cw.fetch import crossword_number_from_date
+from cw.fetch import latest_crossword_number
 
 
 @pytest.mark.parametrize(
@@ -20,10 +20,23 @@ from cw.fetch import crossword_number_from_date
         (CrosswordStyle.CRYPTIC, date(2000, 9, 11), 22000),
         (CrosswordStyle.CRYPTIC, date(2023, 2, 22), 29000),
         (CrosswordStyle.CRYPTIC, date(2007, 2, 14), 24000),
+        (CrosswordStyle.CRYPTIC, date(2026, 10, 25), 30121),
+        (CrosswordStyle.CRYPTIC, date(2026, 10, 26), 30121),
+        (
+            # A Sunday when no puzzle was published
+            CrosswordStyle.CRYPTIC,
+            date(2026, 9, 27),
+            30122,
+        ),
+        (CrosswordStyle.CRYPTIC, date(2026, 9, 26), 30122),
+        (CrosswordStyle.QUICKCRYPTIC, date(2024, 4, 6), 1),
+        (CrosswordStyle.QUICKCRYPTIC, date(2025, 4, 19), 55),
+        (CrosswordStyle.QUICKCRYPTIC, date(2026, 9, 26), 130),
+        (CrosswordStyle.QUICKCRYPTIC, date(2026, 10, 1), 130),
     ],
 )
-def test_number_logic(style: CrosswordStyle, date: date, expected_number: int):
-    actual_number = crossword_number_from_date(style, date)
+def test_latest_number(style: CrosswordStyle, date: date, expected_number: int):
+    actual_number = latest_crossword_number(style, date)
     assert expected_number == actual_number, (
         f"{style} {date}: got {actual_number}, expected {expected_number}"
     )

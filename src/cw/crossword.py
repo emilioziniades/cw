@@ -8,6 +8,7 @@ class CrosswordStyle(StrEnum):
     MINI = auto()
     QUICK = auto()
     CRYPTIC = auto()
+    QUICKCRYPTIC = auto()
 
 
 class Direction(StrEnum):
