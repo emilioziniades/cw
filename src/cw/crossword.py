@@ -67,13 +67,12 @@ class Clue:
         x0 = self.position_x
         y0 = self.position_y
 
-        match self.direction:
-            case Direction.ACROSS:
-                xs = range(x0, x0 + length)
-                ys = repeat(y0, length)
-            case Direction.DOWN:
-                xs = repeat(x0, length)
-                ys = range(y0, y0 + length)
+        if self.direction is Direction.ACROSS:
+            xs = range(x0, x0 + length)
+            ys = repeat(y0, length)
+        elif self.direction is Direction.DOWN:
+            xs = repeat(x0, length)
+            ys = range(y0, y0 + length)
 
         return list(zip(xs, ys))
 
