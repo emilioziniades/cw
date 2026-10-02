@@ -154,8 +154,8 @@ def latest_crossword_number(style: CrosswordStyle, d: date) -> int:
         date(2009, 7, 20),
     ]
 
-    QUICKCRYPTIC_START_DATE = date(2024, 4, 6)
-    QUICKCRYPTIC_START_NUMBER = 1
+    QUICK_CRYPTIC_START_DATE = date(2024, 4, 6)
+    QUICK_CRYPTIC_START_NUMBER = 1
 
     def dates_lte(d: date, ds: list[date]) -> int:
         return len([i for i in ds if d >= i])
@@ -187,9 +187,9 @@ def latest_crossword_number(style: CrosswordStyle, d: date) -> int:
         )
 
     # Quick Cryptic crosswords are only published on a Saturday
-    elif style is CrosswordStyle.QUICKCRYPTIC:
+    elif style is CrosswordStyle.QUICK_CRYPTIC:
         return (
-            QUICKCRYPTIC_START_NUMBER
-            + n_days_between(SATURDAY, QUICKCRYPTIC_START_DATE, d)
+            QUICK_CRYPTIC_START_NUMBER
+            + n_days_between(SATURDAY, QUICK_CRYPTIC_START_DATE, d)
             - 1
         )

@@ -18,6 +18,11 @@ logger = logging.getLogger(__name__)
 # TODO: standardize error message here e.g. active check and error log
 
 
+class EnumValueChoice(click.Choice):
+    def normalize_choice(self, choice, ctx):
+        return super().normalize_choice(str(choice), ctx)
+
+
 @click.group()
 @click.option("-v", "--verbose", is_flag=True)
 @click.version_option()
@@ -40,7 +45,7 @@ def cli(verbose: bool):
 @cli.command()
 @click.argument(
     "style",
-    type=click.Choice(CrosswordStyle, case_sensitive=False),
+    type=EnumValueChoice(CrosswordStyle, case_sensitive=False),
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
@@ -54,7 +59,7 @@ def fetch(style: CrosswordStyle, number: int | None):
 @cli.command()
 @click.argument(
     "style",
-    type=click.Choice(CrosswordStyle, case_sensitive=False),
+    type=EnumValueChoice(CrosswordStyle, case_sensitive=False),
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
@@ -68,7 +73,7 @@ def start(style: CrosswordStyle, number: int | None):
 @cli.command()
 @click.argument(
     "style",
-    type=click.Choice(CrosswordStyle, case_sensitive=False),
+    type=EnumValueChoice(CrosswordStyle, case_sensitive=False),
     default=CrosswordStyle.MINI,
 )
 @click.argument("number", type=int, default=None)
@@ -196,7 +201,7 @@ def clear(clue: ClueArgument | None):
 @cli.command()
 @click.option(
     "--output",
-    type=click.Choice(OutputStyle, case_sensitive=False),
+    type=EnumValueChoice(OutputStyle, case_sensitive=False),
     help="Output style for crossword and clues",
 )
 def configure(output: OutputStyle | None):
