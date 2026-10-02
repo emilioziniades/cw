@@ -186,8 +186,10 @@ def latest_crossword_number(style: CrosswordStyle, d: date) -> int:
             + dates_lte(d, CRYPTIC_DATES_EXTRA_PUZZLE)
         )
 
-    # Quick Cryptic crosswords are  only published on a Sunday
+    # Quick Cryptic crosswords are only published on a Saturday
     elif style is CrosswordStyle.QUICKCRYPTIC:
-        return QUICKCRYPTIC_START_NUMBER + n_days_between(
-            SUNDAY, QUICKCRYPTIC_START_DATE, d
+        return (
+            QUICKCRYPTIC_START_NUMBER
+            + n_days_between(SATURDAY, QUICKCRYPTIC_START_DATE, d)
+            - 1
         )
