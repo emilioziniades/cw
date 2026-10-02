@@ -8,7 +8,7 @@ Module for fetching crossword data from the Guardian website.
 
 import json
 import logging
-from calendar import FRIDAY, MONDAY, SATURDAY, SUNDAY, THURSDAY, TUESDAY, WEDNESDAY
+from calendar import SATURDAY, SUNDAY
 from datetime import date
 
 import requests

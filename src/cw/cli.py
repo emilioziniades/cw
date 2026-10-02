@@ -8,8 +8,8 @@ from cw.calendar import today
 from cw.config import OutputStyle, config
 from cw.crossword import Crossword, CrosswordStyle
 from cw.db import get_crossword
-from cw.fetch import latest_crossword_number
 from cw.fetch import fetch as cw_fetch
+from cw.fetch import latest_crossword_number
 from cw.grid import Grid
 from cw.parameters import ClueArgument, ClueParamType
 

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from typing import TypeVar
 
-from cw.calendar import days_between, is_sunday, n_days_between
+from cw.calendar import days_between, n_days_between
 from cw.crossword import CrosswordStyle
 from cw.fetch import fetch
 
@@ -84,7 +84,7 @@ def binary_search(
             else:
                 missing_days = list(
                     filter(
-                        lambda d: not is_sunday(d),
+                        lambda d: d.weekday() != SUNDAY,
                         days_between(start.date, end.date),
                     )
                 )

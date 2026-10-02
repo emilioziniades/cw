@@ -22,13 +22,7 @@ from cw.fetch import latest_crossword_number
         (CrosswordStyle.CRYPTIC, date(2007, 2, 14), 24000),
         (CrosswordStyle.CRYPTIC, date(2026, 9, 25), 30121),
         (CrosswordStyle.CRYPTIC, date(2026, 9, 26), 30122),
-        (
-            # A Sunday when no puzzle was published
-            CrosswordStyle.CRYPTIC,
-            date(2026, 9, 27),
-            30122,
-        ),
-        (CrosswordStyle.CRYPTIC, date(2026, 9, 26), 30122),
+        (CrosswordStyle.CRYPTIC, date(2026, 9, 27), 30122),
         (CrosswordStyle.QUICKCRYPTIC, date(2024, 4, 6), 1),
         (CrosswordStyle.QUICKCRYPTIC, date(2024, 4, 7), 1),
         (CrosswordStyle.QUICKCRYPTIC, date(2024, 4, 8), 1),
