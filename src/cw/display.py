@@ -43,21 +43,13 @@ def print_crossword(cw: Crossword, reveal: bool = False):
         if c.direction is Direction.DOWN
     ]
 
-    print(
-        Padding(
-            Text(
-                f"The Guardian {cw.style.capitalize()} #{cw.number}",
-                style="bold underline",
-            ),
-            (1, 0, 1, 1),
-        )
-    )
-    print(
-        Padding(
-            Markdown(cw.instructions),
-            (0, 0, 1, 2),
-        )
-    )
+    title = f"The Guardian {cw.style.capitalize()} #{cw.number}"
+
+    print(Padding(Text(title, style="bold underline"), (1, 0, 1, 1)))
+
+    if cw.instructions:
+        print(Padding(Markdown(cw.instructions), (0, 0, 1, 2)))
+
     print(
         Columns(
             [

@@ -79,7 +79,7 @@ def puzzle_json_from_html(html: str) -> dict:
     data = json.loads(str(crossword_props))
 
     # Convert instructions to markdown
-    instructions = data["data"]["instructions"].replace("\n", "<br>")
+    instructions = data.get("data", {}).get("instructions", "").replace("\n", "<br>")
     data["data"]["instructions"] = markdownify(instructions)
 
     return data
