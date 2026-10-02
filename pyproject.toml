@@ -10,6 +10,7 @@ requires-python = ">=3.13"
 dependencies = [
     "beautifulsoup4>=4.14.3",
     "click>=8.3.3",
+    "markdownify>=1.2.3",
     "platformdirs>=4.9.6",
     "pytest>=9.0.3",
     "requests>=2.33.1",

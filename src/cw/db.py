@@ -53,6 +53,7 @@ def migrate():
             n_rows INTEGER NOT NULL,
             n_columns INTEGER NOT NULL,
             user_state TEXT NOT NULL CHECK(user_state IN ('active', 'inactive', 'complete')),
+            instructions TEXT  NOT NULL DEFAULT '',
             PRIMARY KEY (style, number),
             UNIQUE (style, number)
         );
@@ -107,9 +108,9 @@ def add_crossword(crossword: Crossword):
         db.execute(
             """
             INSERT INTO crossword
-            (style, number, date, name, n_rows, n_columns, user_state)
+            (style, number, date, name, n_rows, n_columns, user_state, instructions)
             VALUES
-            (:style, :number, :date, :name, :n_rows, :n_columns, :user_state)
+            (:style, :number, :date, :name, :n_rows, :n_columns, :user_state, :instructions)
             """,
             {
                 "style": crossword.style,
@@ -119,6 +120,7 @@ def add_crossword(crossword: Crossword):
                 "n_rows": crossword.n_rows,
                 "n_columns": crossword.n_columns,
                 "user_state": crossword.user_state,
+                "instructions": crossword.instructions,
             },
         )
 

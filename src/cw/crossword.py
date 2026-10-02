@@ -92,6 +92,7 @@ class Crossword:
     n_columns: int
     user_state: State
     clues: list[Clue]
+    instructions: str
 
     @staticmethod
     def from_json(data: dict) -> "Crossword":
@@ -104,6 +105,7 @@ class Crossword:
             n_columns=data["dimensions"]["cols"],
             user_state=State.INACTIVE,
             clues=[Clue.from_json(c) for c in data["entries"]],
+            instructions=data["instructions"],
         )
 
     @staticmethod
@@ -118,6 +120,7 @@ class Crossword:
             n_columns=data["n_columns"],
             user_state=State(data["user_state"]),
             clues=[Clue.from_row(c) for c in clues_rows],
+            instructions=data["instructions"],
         )
 
     def __post_init__(self):

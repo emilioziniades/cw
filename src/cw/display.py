@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from rich import print
 from rich.columns import Columns
 from rich.console import Console
+from rich.markdown import Markdown
+from rich.padding import Padding
 from rich.table import Table
 from rich.text import Text
 
@@ -41,6 +43,21 @@ def print_crossword(cw: Crossword, reveal: bool = False):
         if c.direction is Direction.DOWN
     ]
 
+    print(
+        Padding(
+            Text(
+                f"The Guardian {cw.style.capitalize()} #{cw.number}",
+                style="bold underline",
+            ),
+            (1, 0, 1, 1),
+        )
+    )
+    print(
+        Padding(
+            Markdown(cw.instructions),
+            (0, 0, 1, 2),
+        )
+    )
     print(
         Columns(
             [

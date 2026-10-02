@@ -13,6 +13,7 @@ from datetime import date
 
 import requests
 from bs4 import BeautifulSoup
+from markdownify import markdownify
 
 from cw.calendar import n_days_between, today
 from cw.config import config
@@ -76,6 +77,11 @@ def puzzle_json_from_html(html: str) -> dict:
         )
 
     data = json.loads(str(crossword_props))
+
+    # Convert instructions to markdown
+    instructions = data["data"]["instructions"].replace("\n", "<br>")
+    data["data"]["instructions"] = markdownify(instructions)
+
     return data
 
 
