@@ -26,22 +26,30 @@ class Cell:
     is_black_square: bool = True
 
 
-def print_crossword(cw: Crossword, reveal: bool = False):
+def print_crossword(cw: Crossword, reveal: bool = False, hide_completed: bool = False):
     grid = Grid.from_crossword(cw)
 
     output_style = config.user_config.output
 
-    acrosses = [Text("Across", style="bold underline")] + [
-        Text(str(c), style="dim strike" if grid.is_clue_complete(c) else "")
-        for c in sorted(cw.clues, key=lambda c: c.number)
-        if c.direction is Direction.ACROSS
-    ]
+    acrosses = [Text("Across", style="bold underline")]
+    downs = [Text("Down", style="bold underline")]
 
-    downs = [Text("Down", style="bold underline")] + [
-        Text(str(c), style="dim strike" if grid.is_clue_complete(c) else "")
-        for c in sorted(cw.clues, key=lambda c: c.number)
-        if c.direction is Direction.DOWN
-    ]
+    for clue in sorted(cw.clues, key=lambda c: c.number):
+        is_complete = grid.is_clue_complete(clue)
+
+        if is_complete and hide_completed:
+            continue
+
+        style = ""
+        if is_complete:
+            style = "dim strike"
+
+        text = Text(str(clue), style)
+
+        if clue.direction is Direction.ACROSS:
+            acrosses.append(text)
+        elif clue.direction is Direction.DOWN:
+            downs.append(text)
 
     title = f"The Guardian {cw.style.capitalize()} #{cw.number}"
 

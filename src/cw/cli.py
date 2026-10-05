@@ -84,8 +84,9 @@ def stop(style: CrosswordStyle, number: int | None):
 
 
 @cli.command()
-def show():
-    print_current_crossword()
+@click.option("-H", "--hide-completed", is_flag=True)
+def show(hide_completed: bool):
+    print_current_crossword(hide_completed=hide_completed)
 
 
 @cli.command()
@@ -214,7 +215,7 @@ def configure(output: OutputStyle | None):
     logger.info("Configuration saved")
 
 
-def print_current_crossword(reveal: bool = False):
+def print_current_crossword(reveal: bool = False, hide_completed: bool = False):
     active = db.get_active_crossword()
     if active is None:
         logger.fatal(
@@ -226,4 +227,4 @@ def print_current_crossword(reveal: bool = False):
     if crossword is None:
         raise ValueError("The active crossword does not exist")
 
-    display.print_crossword(crossword, reveal=reveal)
+    display.print_crossword(crossword, reveal=reveal, hide_completed=hide_completed)
