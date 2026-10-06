@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from rich import print
 from rich.columns import Columns
 from rich.console import Console
+from rich.highlighter import ReprHighlighter
 from rich.markdown import Markdown
 from rich.padding import Padding
 from rich.table import Table
@@ -33,6 +34,7 @@ def print_crossword(cw: Crossword, reveal: bool = False, hide_completed: bool = 
 
     acrosses = [Text("Across", style="bold underline")]
     downs = [Text("Down", style="bold underline")]
+    highlight = ReprHighlighter()
 
     for clue in sorted(cw.clues, key=lambda c: c.number):
         is_complete = grid.is_clue_complete(clue)
@@ -44,7 +46,7 @@ def print_crossword(cw: Crossword, reveal: bool = False, hide_completed: bool = 
         if is_complete:
             style = "dim strike"
 
-        text = Text(str(clue), style)
+        text = highlight(Text.from_markup(str(clue), style=style))
 
         if clue.direction is Direction.ACROSS:
             acrosses.append(text)
